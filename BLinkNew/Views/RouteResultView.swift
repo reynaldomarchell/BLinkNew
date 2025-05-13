@@ -1,10 +1,3 @@
-//
-//  RouteResultView.swift
-//  BLink
-//
-//  Created by reynaldo on 27/03/25.
-//
-
 import SwiftUI
 import MapKit
 import SwiftData

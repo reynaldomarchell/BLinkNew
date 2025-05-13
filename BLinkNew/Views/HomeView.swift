@@ -1,10 +1,3 @@
-//
-//  HomeView.swift
-//  BLink
-//
-//  Created by reynaldo on 27/03/25.
-//
-
 import SwiftUI
 import AVFoundation
 import Vision
@@ -12,7 +5,6 @@ import CoreImage
 import SwiftData
 
 struct HomeView: View {
-    @State private var showRouteFinderView = false
     @State private var recognizedPlate: String?
     @State private var showScanResult = false
     @State private var isShowingManualInput = false
@@ -23,7 +15,10 @@ struct HomeView: View {
     @State private var isProcessing = false
     @State private var detectedPlateText = ""
     @State private var scanFrameRect = CGRect(x: 0, y: 0, width: 250, height: 150)
-    @State private var showRouteHistory = false
+    @State private var showHistory = false
+    @State private var activeJourney: BusInfo?
+    @State private var showJourneyView = false
+    @State private var selectedTab: Int = 0
     
     // Add SwiftData environment
     @Environment(\.modelContext) private var modelContext
@@ -31,117 +26,116 @@ struct HomeView: View {
     @Query private var busRoutes: [BusRoute]
     
     var body: some View {
-        ZStack {
-            // Camera view
-            CameraView(recognizedPlate: $recognizedPlate,
-                       showScanResult: $showScanResult,
-                       capturedImage: $capturedImage,
-                       isPlateDetected: $isPlateDetected,
-                       detectedPlateText: $detectedPlateText,
-                       scanFrameRect: $scanFrameRect,
-                       manualCapture: false)
-            .edgesIgnoringSafeArea(.all)
-            
-            // Overlay UI
-            VStack {
-                // Header
-                ZStack{
-                    Rectangle()
-                        .foregroundStyle(.clear)
-                        .frame(width: 402, height: 60)
+        GeometryReader { geometry in
+            ZStack {
+                // Camera view
+                CameraView(recognizedPlate: $recognizedPlate,
+                           showScanResult: $showScanResult,
+                           capturedImage: $capturedImage,
+                           isPlateDetected: $isPlateDetected,
+                           detectedPlateText: $detectedPlateText,
+                           scanFrameRect: $scanFrameRect,
+                           manualCapture: false)
+                .edgesIgnoringSafeArea(.all)
+                
+                // Overlay UI
+                VStack(spacing: 0) {
+                    // Header - only tutorial button, no title or history button
                     HStack {
-                        Text("BLink")
-                            .font(.title)
-                            .fontWeight(.bold)
-                            .padding()
-                            .foregroundColor(.white)
                         Spacer()
                         
-                        
-                        // Route Finder button - aligned with tutorial button
-                        Button(action: {
-                            showRouteFinderView = true
-                        }) {
-                            Image(systemName: "arrow.trianglehead.swap")
-                                .font(.title2)
-                                .foregroundColor(.black)
-                                .padding(3)
-                                .background(Circle().fill(Color.white))
-                        }
-                        
-                        // History button - aligned with tutorial button
-                        Button(action: {
-                            showRouteHistory = true
-                        }) {
-                            Image(systemName: "clock")
-                                .font(.title2)
-                                .foregroundColor(.black)
-                                .padding(2)
-                                .background(Circle().fill(Color.white))
-                        }
-                        
-                        // Tutorial button
+                        // Tutorial button - now purple
                         Button(action: {
                             showTutorial = true
                         }) {
                             Image(systemName: "questionmark")
-                                .foregroundColor(.black)
-                                .padding(8)
-                                .background(Circle().fill(Color.white))
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .padding(12)
+                                .background(Circle().fill(Color(hex: "a068ff")))
                         }
                         .padding(.trailing)
                     }
-                }
-                Spacer()
-                
-                // Scanning frame with instructions
-                VStack(spacing: 25) {
+                    .padding(.top)
                     
-                    // Scanning frame - this will be positioned over the camera view
-                    ZStack {
+                    Spacer()
+
+                    // Active journey card (if there's an active journey)
+                    if let journey = activeJourney {
+                        ActiveJourneyCard(busInfo: journey) {
+                            showJourneyView = true
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom, 20)
+                        .transition(.move(edge: .bottom))
+                    }
+
+                    // Use ZStack to keep the frame in a fixed position
+                    ZStack(alignment: .center) {
+                        // Scanning frame - solid rectangle that turns green when plate detected
                         Rectangle()
-                            .stroke(style: StrokeStyle(lineWidth: 3, dash: [10, 5]))
-                            .frame(width: 250, height: 150)
+                            .stroke(style: StrokeStyle(lineWidth: 3))
+                            .frame(width: 300, height: 150)
                             .foregroundColor(isPlateDetected ? .green : .white)
-                            .background(Color.clear)
                             .overlay(
-                                GeometryReader { geometry in
+                                GeometryReader { frameGeometry in
                                     Color.clear
                                         .onAppear {
                                             // Store the frame's position for region of interest
-                                            let frame = geometry.frame(in: .global)
+                                            let frame = frameGeometry.frame(in: .global)
                                             scanFrameRect = frame
                                         }
                                 }
                             )
-                        
+                    }
+                    .frame(height: 300) // Fixed height
+                    .padding(.bottom, 0) // Fixed padding below frame
+
+                    // Fixed space for the plate detection card
+                    ZStack {
+                        // Plate detection overlay with purple gradient
                         if isPlateDetected {
-                            Text(detectedPlateText)
-                                .font(.caption)
-                                .padding(4)
-                                .background(Color.black.opacity(0.6))
-                                .foregroundColor(.white)
-                                .cornerRadius(4)
-                                .position(x: 125, y: 130)
+                            VStack(spacing: 4) {
+                                Text(detectedPlateText)
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+
+                                Text("Is this the Correct Plate?")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white)
+
+                                Text("Click Shutter Button to Confirm!")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 24)
+                            .background(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color(hex: "a068ff").opacity(0.8), Color(hex: "8a4fd3").opacity(0.8)]),
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .cornerRadius(16)
                         }
                     }
-                    .frame(width: 250, height: 150)
-                    .padding(60)
-                    
-                    
+                    .frame(height: 80) // Fixed height for card area
+                    .padding(.bottom, 60) // Fixed padding
+
                     // Capture button
                     Button(action: {
                         captureAndAnalyze()
                     }) {
                         ZStack {
                             Circle()
+                                .stroke(Color.white, lineWidth: 4)
+                                .frame(width: 80, height: 80)
+                            
+                            Circle()
                                 .fill(isProcessing ? Color.gray : Color.white)
-                                .frame(width: 60, height: 60)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.white, lineWidth: 2)
-                                        .frame(width: 70, height: 70)
-                                )
+                                .frame(width: 70, height: 70)
                             
                             if isProcessing {
                                 ProgressView()
@@ -151,36 +145,51 @@ struct HomeView: View {
                         }
                     }
                     .disabled(isProcessing)
+                    .padding(.bottom, 40)
                     
-                    //scanning instruction
-                    Text("Place the bus plate number\ninside the box and snap")
-                        .font(.system(size: 15, weight: .medium))
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.white)
-                        .padding(11)
-                        .background(Color.gray.opacity(0.3))
-                        .cornerRadius(10)
-                    
-                    
-                        // input bus plate option
+                    // Bottom tab bar
+                    HStack {
+                        Spacer()
+                        
+                        // History tab
+                        Button(action: {
+                            showHistory = true
+                        }) {
+                            VStack(spacing: 4) {
+                                Image(systemName: "clock")
+                                    .font(.title3)
+                                Text("History")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.gray)
+                            .frame(width: 80)
+                        }
+                        
+                        Spacer()
+                        
+                        // Manual input tab
                         Button(action: {
                             isShowingManualInput = true
                         }) {
-                            Text("Enter Bus Plate Manually")
-                                .font(.system(size: 18))
-                                .foregroundColor(Color("BlueColorTheme"))
-                                .underline()
-                                //.frame(width: 330, height: 43)
-                                //.background(Color("BlueColorTheme"))
-                                //.cornerRadius(7)
+                            VStack(spacing: 4) {
+                                Image(systemName: "123.rectangle")
+                                    .font(.title3)
+                                Text("Enter Plate")
+                                    .font(.caption)
+                            }
+                            .foregroundColor(.gray)
+                            .frame(width: 80)
                         }
-                    
-                    //.padding(.vertical, 20)
-                    //.padding(.horizontal, 15)
-                    //.padding(.horizontal, 20)
-                    .padding(.bottom, 80)
+                        
+                        Spacer()
+                    }
+                    .padding(.vertical, 20)
+                    .background(Color.white)
+                    .cornerRadius(20, corners: [.topLeft, .topRight])
                 }
+                .ignoresSafeArea(.all, edges: .bottom) // Ensure the bottom extends past safe area
             }
+            .background(Color.black) // Add black background to fill any gaps
         }
         .onAppear {
             checkCameraPermission()
@@ -188,37 +197,41 @@ struct HomeView: View {
             // Debug print
             print("Current bus infos: \(busInfos.count)")
             print("Available routes: \(busRoutes.count)")
-            if busInfos.count <= 4 {
-                print("Available bus plates: \(busInfos.map { $0.plateNumber })")
-            }
-            if busRoutes.count > 0 {
-                print("Available route codes: \(busRoutes.map { $0.routeCode })")
-            }
-        }
-        .fullScreenCover(item: $selectedBusForScan) { busInfo in
-            // Use a fullScreenCover with an identifiable item for better state management
-            ScanResultView(plateNumber: busInfo.plateNumber)
         }
         .sheet(isPresented: $showScanResult) {
             if let plate = recognizedPlate {
-                ScanResultView(plateNumber: plate)
+                JourneyStartView(plateNumber: plate, onStartJourney: { busInfo in
+                    activeJourney = busInfo
+                    showJourneyView = true
+                })
             }
-        }
-        .sheet(isPresented: $showRouteFinderView) {
-            RouteFinderView()
         }
         .sheet(isPresented: $isShowingManualInput) {
             ManualPlateInputView(onSelectBus: { plateNumber in
                 // Find the bus info for this plate number
                 if let busInfo = findBusInfo(for: plateNumber) {
-                    // Set the selected bus and close the manual input view
-                    selectedBusFromManual = busInfo
+                    recognizedPlate = plateNumber
+                    showScanResult = true
                     isShowingManualInput = false
                 }
             })
         }
         .fullScreenCover(isPresented: $showTutorial) {
-            TutorialContent(isPresented: $showTutorial)
+            TutorialView()
+        }
+        .sheet(isPresented: $showHistory) {
+            HistoryView(onSelectBus: { plateNumber in
+                recognizedPlate = plateNumber
+                showScanResult = true
+                showHistory = false
+            })
+        }
+        .fullScreenCover(isPresented: $showJourneyView) {
+            if let journey = activeJourney {
+                CurrentJourneyView(busInfo: journey, onJourneyComplete: {
+                    activeJourney = nil
+                })
+            }
         }
         .alert(isPresented: .constant(!isCameraAuthorized && AVCaptureDevice.authorizationStatus(for: .video) == .denied)) {
             Alert(
@@ -232,53 +245,18 @@ struct HomeView: View {
                 secondaryButton: .cancel()
             )
         }
-        .sheet(isPresented: $showRouteHistory) {
-            RouteHistoryView(onSelectBus: { plateNumber in
-                // Find the bus info for this plate number
-                if let busInfo = findBusInfo(for: plateNumber) {
-                    // Set the selected bus and close the history view
-                    selectedBusForScan = busInfo
-                    showRouteHistory = false
-                }
-            })
-        }
-        .fullScreenCover(item: $selectedBusFromManual) { busInfo in
-            // Use a fullScreenCover with an identifiable item for better state management
-            ScanResultView(plateNumber: busInfo.plateNumber)
-        }
     }
     
-    // Add a new state variable to track the selected bus from history
-    @State private var selectedBusForScan: IdentifiableBusInfo?
-    
-    // Add a new state variable to track the selected bus from manual input
-    @State private var selectedBusFromManual: IdentifiableBusInfo?
-    
     // Helper function to find bus info for a plate number
-    private func findBusInfo(for plateNumber: String) -> IdentifiableBusInfo? {
+    private func findBusInfo(for plateNumber: String) -> BusInfo? {
         // Normalize the plate number for comparison
         let normalizedPlate = plateNumber.uppercased().filter { $0.isLetter || $0.isNumber }
         
-        print("Looking for bus info with plate: \(plateNumber)")
-        print("Normalized plate: \(normalizedPlate)")
-        
         // Find the matching bus info
-        if let busInfo = busInfos.first(where: {
+        return busInfos.first(where: {
             let normalizedBusPlate = $0.plateNumber.uppercased().filter { $0.isLetter || $0.isNumber }
-            let matches = normalizedPlate == normalizedBusPlate
-            
-            if matches {
-                print("✅ Found match: \(plateNumber) with \($0.plateNumber)")
-            }
-            
-            return matches
-        }) {
-            // Create an identifiable wrapper for the bus info
-            return IdentifiableBusInfo(id: UUID(), plateNumber: busInfo.plateNumber)
-        }
-        
-        print("❌ No match found for plate: \(plateNumber)")
-        return nil
+            return normalizedPlate == normalizedBusPlate
+        })
     }
     
     private func captureAndAnalyze() {
@@ -387,22 +365,6 @@ struct HomeView: View {
         }
     }
     
-    // Helper function to check if a string looks like a license plate
-    private func looksLikePlate(_ text: String) -> Bool {
-        // Must have at least one letter and one number
-        let hasLetters = text.rangeOfCharacter(from: .letters) != nil
-        let hasNumbers = text.rangeOfCharacter(from: .decimalDigits) != nil
-        
-        // Must not be too long or too short
-        let validLength = text.count >= 5 && text.count <= 10
-        
-        // Must not be common bus text like "BSDCITY"
-        let commonBusText = ["BSDCITY", "BSD", "CITY", "BUS", "BUSWAY", "TRANS"]
-        let isCommonText = commonBusText.contains { text.uppercased().contains($0) }
-        
-        return hasLetters && hasNumbers && validLength && !isCommonText
-    }
-    
     // Helper function to extract plate number from text
     private func extractPlateNumber(from text: String) -> String? {
         // Standard Indonesian license plate pattern:
@@ -434,18 +396,23 @@ struct HomeView: View {
         
         return nil
     }
-    
-    // Add a function to reset the tutorial for testing purposes
-    private func resetTutorial() {
-        UserDefaults.standard.set(false, forKey: "hasLaunchedBefore")
-        print("Tutorial reset - will show on next app launch")
+}
+
+// Extension to create rounded corners for specific corners
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
     }
 }
 
-// Create an identifiable wrapper for BusInfo to use with fullScreenCover(item:)
-struct IdentifiableBusInfo: Identifiable {
-    let id: UUID
-    let plateNumber: String
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
+    }
 }
 
 // Camera view using UIViewRepresentable
@@ -606,9 +573,6 @@ struct CameraView: UIViewRepresentable {
                         // Get more candidates to improve chances of finding the plate
                         observation.topCandidates(10).map { $0.string }
                     }.flatMap { $0 }
-                    
-                    // Debug: Print all recognized strings
-                    print("Recognized text candidates: \(recognizedStrings)")
                     
                     var plateDetected = false
                     var plateText = ""
@@ -840,6 +804,95 @@ struct CameraView: UIViewRepresentable {
     }
 }
 
+// Active journey card component
+struct ActiveJourneyCard: View {
+    let busInfo: BusInfo
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Current Journey")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    Text(busInfo.routeName)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    HStack {
+                        Image(systemName: "location.fill")
+                            .foregroundColor(.white.opacity(0.8))
+                            .font(.caption)
+                        
+                        Text(busInfo.endPoint)
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    HStack {
+                        Text("\(busInfo.estimatedTime) min")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        
+                        Image(systemName: "clock.fill")
+                            .foregroundColor(.white)
+                            .font(.caption)
+                    }
+                    
+                    HStack {
+                        Text("\(String(format: "%.1f", busInfo.distance)) km")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        Image(systemName: "figure.walk")
+                            .foregroundColor(.white.opacity(0.8))
+                            .font(.caption)
+                    }
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(hex: "6920e1"))
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// Helper extension for hex colors
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+        
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
+}
 
 #Preview {
     HomeView()

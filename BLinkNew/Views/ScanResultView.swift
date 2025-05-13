@@ -1,10 +1,3 @@
-//
-//  ScanResultView.swift
-//  BLink
-//
-//  Created by reynaldo on 27/03/25.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -371,7 +364,11 @@ struct ScanResultView: View {
             let busInfo = BusInfo(
                 plateNumber: formattedPlate,
                 routeCode: routeInfo.code,
-                routeName: routeInfo.name
+                routeName: routeInfo.name,
+                startPoint: "Unknown", // Default value
+                endPoint: routeInfo.name.components(separatedBy: " - ").last ?? "Unknown",
+                estimatedTime: 30, // Default value in minutes
+                distance: 0.5 // Default value in km
             )
             
             // Check for duplicates one more time before inserting

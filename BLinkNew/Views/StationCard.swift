@@ -1,10 +1,3 @@
-//
-//  StationCard.swift
-//  BLink
-//
-//  Created by reynaldo on 06/04/25.
-//
-
 import SwiftUI
 
 struct StationCard: View {
@@ -83,4 +76,3 @@ struct StationCard: View {
        isNextStation: false
    ))
 }
-

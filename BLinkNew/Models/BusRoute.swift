@@ -1,10 +1,3 @@
-//
-//  BusRoute.swift
-//  BLink
-//
-//  Created by reynaldo on 27/03/25.
-//
-
 import Foundation
 import SwiftData
 
@@ -52,4 +45,3 @@ struct Station: Codable, Hashable {
        self.isNextStation = isNextStation
    }
 }
-

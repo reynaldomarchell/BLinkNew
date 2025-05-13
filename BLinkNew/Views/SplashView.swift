@@ -1,10 +1,3 @@
-//
-//  SplashView.swift
-//  BLink
-//
-//  Created by reynaldo on 27/03/25.
-//
-
 import SwiftUI
 
 struct SplashView: View {
@@ -14,14 +7,10 @@ struct SplashView: View {
     
     var body: some View {
         if isActive {
-            // Check if this is the first launch
-            if UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
-                // Not first launch, go directly to HomeView
-                HomeView()
-            } else {
-                // First launch, show tutorial
-                TutorialView()
-            }
+            HomeView()
+                .fullScreenCover(isPresented: .constant(!UserDefaults.standard.bool(forKey: "hasLaunchedBefore"))) {
+                    TutorialView()
+                }
         } else {
             VStack(spacing: 10) {
                 Image("AppLogo")
@@ -43,14 +32,10 @@ struct SplashView: View {
                             }
                         }
                     }
-                //                        .onAppear {
-                //                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                //                                withAnimation {
-                //                                    self.isActive = true
-                //                                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(UIColor.systemBackground))
         }
-        
     }
 }
 

@@ -1,10 +1,3 @@
-//
-//  BusInfo.swift
-//  BLink
-//
-//  Created by reynaldo on 27/03/25.
-//
-
 import Foundation
 import SwiftData
 
@@ -15,13 +8,20 @@ final class BusInfo {
     var routeCode: String
     var routeName: String
     var lastSeen: Date
+    var startPoint: String
+    var endPoint: String
+    var estimatedTime: Int // in minutes
+    var distance: Double // in km
     
-    init(id: UUID = UUID(), plateNumber: String, routeCode: String, routeName: String, lastSeen: Date = Date()) {
+    init(id: UUID = UUID(), plateNumber: String, routeCode: String, routeName: String, lastSeen: Date = Date(), startPoint: String, endPoint: String, estimatedTime: Int, distance: Double) {
         self.id = id
         self.plateNumber = plateNumber
         self.routeCode = routeCode
         self.routeName = routeName
         self.lastSeen = lastSeen
+        self.startPoint = startPoint
+        self.endPoint = endPoint
+        self.estimatedTime = estimatedTime
+        self.distance = distance
     }
 }
-

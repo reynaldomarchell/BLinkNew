@@ -1,10 +1,3 @@
-//
-//  ManualPlateInputView.swift
-//  BLink
-//
-//  Created by reynaldo on 27/03/25.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -45,7 +38,7 @@ struct ManualPlateInputView: View {
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(width: 200, height: 50)
-                        .background(plateNumber.isEmpty ? Color.gray : Color.blue)
+                        .background(plateNumber.isEmpty ? Color.gray : Color(hex: "a068ff"))
                         .cornerRadius(10)
                 }
                 .disabled(plateNumber.isEmpty)
@@ -56,10 +49,6 @@ struct ManualPlateInputView: View {
             .navigationBarItems(trailing: Button("Cancel") {
                 dismiss()
             })
-        }
-        .onAppear {
-            // Debug print to check available bus infos
-            print("Available bus plates in picker: \(busInfos.map { $0.plateNumber }.joined(separator: ", "))")
         }
     }
     
@@ -112,18 +101,5 @@ struct ManualPlateInputView: View {
 }
 
 #Preview {
-    // For the preview to work with SwiftData, you need to provide a model container
-    do {
-        let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: BusInfo.self, configurations: config)
-        
-        // Add some sample data for the preview
-        let sampleBusInfo = BusInfo(plateNumber: "B 1234 XYZ", routeCode: "BC", routeName: "Sample Route")
-        container.mainContext.insert(sampleBusInfo)
-        
-        return ManualPlateInputView(onSelectBus: { _ in })
-            .modelContainer(container)
-    } catch {
-        return Text("Failed to create preview: \(error.localizedDescription)")
-    }
+    ManualPlateInputView(onSelectBus: { _ in })
 }
