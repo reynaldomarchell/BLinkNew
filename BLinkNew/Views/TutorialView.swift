@@ -2,12 +2,14 @@ import SwiftUI
 
 struct TutorialView: View {
     @Environment(\.dismiss) private var dismiss
+    @Binding var showTutorial: Bool
     
     var body: some View {
         TutorialContent(onComplete: {
             // Set flag indicating the app has been launched before
             UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
             // Dismiss this view to reveal HomeView
+            showTutorial = false
             dismiss()
         })
     }
@@ -59,6 +61,7 @@ struct TutorialContent: View {
                 
                 // Button positioned directly below the steps
                 Button(action: {
+                    print("Got it button pressed")
                     onComplete()
                 }) {
                     Text("Got it")
@@ -120,5 +123,5 @@ struct TutorialStep: View {
 }
 
 #Preview {
-    TutorialView()
+    TutorialView(showTutorial: .constant(true))
 }

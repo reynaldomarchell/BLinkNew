@@ -97,6 +97,90 @@ class DataSeeder {
                 estimatedTime: 35,
                 distance: 0.3,
                 routeDescription: "Intermoda - Vanya Park Loop Line"
+            ),
+            // Add missing routes
+            BusRoute(
+                routeName: "Intermoda - De Park 1",
+                startPoint: "Intermoda",
+                endPoint: "De Park 1",
+                stations: [
+                    Station(name: "Intermoda", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "Simplicity 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "CBD Barat 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "CBD Barat 2", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "De Park 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "ICE 5", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "ICE 6", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "ICE 2", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "ICE 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false)
+                ],
+                routeCode: "ID1",
+                color: "lightblue",
+                estimatedTime: 30,
+                distance: 0.5,
+                routeDescription: "Intermoda - De Park 1 Loop Line"
+            ),
+            BusRoute(
+                routeName: "Intermoda - De Park 2",
+                startPoint: "Intermoda",
+                endPoint: "De Park 2",
+                stations: [
+                    Station(name: "Intermoda", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "Simplicity 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "CBD Barat 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "CBD Barat 2", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "De Park 2", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "ICE 5", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "ICE 6", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "ICE 2", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "ICE 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false)
+                ],
+                routeCode: "ID2",
+                color: "pink",
+                estimatedTime: 35,
+                distance: 0.6,
+                routeDescription: "Intermoda - De Park 2 Loop Line"
+            ),
+            BusRoute(
+                routeName: "Intermoda - Halte Sektor 1.3",
+                startPoint: "Intermoda",
+                endPoint: "Halte Sektor 1.3",
+                stations: [
+                    Station(name: "Intermoda", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "Simplicity 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "CBD Barat 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "CBD Barat 2", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "Halte Sektor 1.3", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "CBD Timur 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "CBD Timur 2", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "Navapark 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false)
+                ],
+                routeCode: "IS",
+                color: "orange",  // Changed from navy to orange
+                estimatedTime: 40,
+                distance: 0.7,
+                routeDescription: "Intermoda - Halte Sektor 1.3 Loop Line"
+            ),
+            BusRoute(
+                routeName: "Electric Line | Intermoda - ICE - QBIG - Ara Rasa - The Breeze - Digital Hub - AEON Mall Loop Line",
+                startPoint: "Intermoda",
+                endPoint: "AEON Mall",
+                stations: [
+                    Station(name: "Intermoda", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "ICE 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "ICE 2", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "QBIG", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "Ara Rasa", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "The Breeze", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "Digital Hub", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "AEON Mall 1", isCurrentStation: false, isPreviousStation: false, isNextStation: false),
+                    Station(name: "AEON Mall 2", isCurrentStation: false, isPreviousStation: false, isNextStation: false)
+                ],
+                routeCode: "EC",
+                color: "teal",  // Changed from red to teal
+                estimatedTime: 45,
+                distance: 0.8,
+                routeDescription: "Electric Line | Intermoda - AEON Mall Loop Line"
             )
         ]
         

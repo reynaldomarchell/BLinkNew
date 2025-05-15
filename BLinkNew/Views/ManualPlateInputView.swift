@@ -2,57 +2,119 @@ import SwiftUI
 import SwiftData
 
 struct ManualPlateInputView: View {
-    @State private var plateNumber = ""
+    @State private var searchText = ""
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \BusInfo.lastSeen, order: .reverse) private var busInfos: [BusInfo]
     var onSelectBus: (String) -> Void
     
+    // Filtered buses based on search text
+    private var filteredBuses: [BusInfo] {
+        if searchText.isEmpty {
+            return busInfos
+        } else {
+            // Normalize the search text for comparison
+            let normalizedSearch = searchText.uppercased().filter { $0.isLetter || $0.isNumber }
+            
+            return busInfos.filter { busInfo in
+                // Normalize the plate number for comparison
+                let normalizedPlate = busInfo.plateNumber.uppercased().filter { $0.isLetter || $0.isNumber }
+                return normalizedPlate.contains(normalizedSearch)
+            }
+        }
+    }
+    
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                Text("Select The \nBus Plate Number")
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .multilineTextAlignment(.center)
-            
-                // Use a wheel picker for bus plates
-                Picker("Bus Plate Number", selection: $plateNumber) {
-                    Text("Select a plate").tag("")
-                    ForEach(busInfos, id: \.plateNumber) { busInfo in
-                        Text(formatPlateForDisplay(busInfo.plateNumber)).tag(busInfo.plateNumber)
-                    }
+            VStack(spacing: 0) {
+                // Search bar with "B |" prefix
+                HStack(spacing: 0) {
+                    Text("B | ")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.primary)
+                    
+                    TextField("1234", text: $searchText)
+                        .font(.system(size: 18))
+                        .disableAutocorrection(true)
+                        .autocapitalization(.allCharacters)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                        .padding(.trailing, 8)
                 }
-                .pickerStyle(.wheel)
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(10)
                 .padding(.horizontal)
-            
-                Button(action: {
-                    if !plateNumber.isEmpty {
-                        // Call the callback with the selected plate
-                        onSelectBus(plateNumber)
+                .padding(.top, 8)
+                .padding(.bottom, 16)
+                
+                // Results list
+                if filteredBuses.isEmpty {
+                    VStack(spacing: 20) {
+                        Spacer()
+                        
+                        Image(systemName: "bus.fill")
+                            .font(.system(size: 50))
+                            .foregroundColor(.gray)
+                        
+                        Text("No matching plates found")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        
+                        Text("Try a different plate number")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        
+                        Spacer()
                     }
-                }) {
-                    Text("Submit")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(width: 200, height: 50)
-                        .background(plateNumber.isEmpty ? Color.gray : Color(hex: "a068ff"))
+                    .padding()
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(filteredBuses) { busInfo in
+                                Button(action: {
+                                    onSelectBus(busInfo.plateNumber)
+                                    dismiss()
+                                }) {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(formatPlateForDisplay(busInfo.plateNumber))
+                                                .font(.headline)
+                                                .foregroundColor(.primary)
+                                            
+                                            Text(busInfo.routeName)
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                        
+                                        Spacer()
+                                    }
+                                    .padding()
+                                    .background(Color(.systemBackground))
+                                }
+                                
+                                Divider()
+                                    .padding(.leading)
+                            }
+                        }
+                        .background(Color(.systemBackground))
                         .cornerRadius(10)
+                    }
                 }
-                .disabled(plateNumber.isEmpty)
-            
+                
                 Spacer()
             }
-            .padding()
-            .navigationBarItems(trailing: Button("Cancel") {
+            .navigationBarTitle("Manual Input", displayMode: .inline)
+            .navigationBarItems(trailing: Button("Close") {
                 dismiss()
             })
         }
     }
     
-    // Add the formatPlateForDisplay function
+    // Format a plate number in the standard format: B 1234 XYZ
     private func formatPlateForDisplay(_ plate: String) -> String {
         // If the plate already has spaces, return it as is
         if plate.contains(" ") {

@@ -4,12 +4,13 @@ struct SplashView: View {
     @State private var isActive = false
     @State private var logoScale: CGFloat = 0.5
     @State private var logoOpacity: Double = 0.0
+    @State private var showTutorial = !UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
     
     var body: some View {
         if isActive {
             HomeView()
-                .fullScreenCover(isPresented: .constant(!UserDefaults.standard.bool(forKey: "hasLaunchedBefore"))) {
-                    TutorialView()
+                .fullScreenCover(isPresented: $showTutorial) {
+                    TutorialView(showTutorial: $showTutorial)
                 }
         } else {
             VStack(spacing: 10) {

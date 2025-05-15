@@ -14,24 +14,17 @@ struct BLinkApp: App {
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var dataInitialized = false
+    @State private var showTutorial = !UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
     
     var body: some View {
-        ZStack {
-            // Main content
-            if UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
-                // Not first launch, go directly to HomeView
-                HomeView()
-            } else {
-                // First launch, show tutorial with HomeView as the destination
-                HomeView()
-                    .fullScreenCover(isPresented: .constant(true)) {
-                        TutorialView()
-                    }
+        // Main content
+        HomeView()
+            .fullScreenCover(isPresented: $showTutorial) {
+                TutorialView(showTutorial: $showTutorial)
             }
-        }
-        .onAppear {
-            initializeData()
-        }
+            .onAppear {
+                initializeData()
+            }
     }
     
     private func initializeData() {

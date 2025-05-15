@@ -10,6 +10,10 @@ struct ScanResultView: View {
     @Query private var busInfos: [BusInfo]
     @Query private var busRoutes: [BusRoute]
     
+    @State private var showJourneyView = false
+    @State private var selectedStation: String?
+    @State private var forceRefresh = false // Add a state to force refresh
+    
     // Find the matching bus info for the scanned plate with improved matching
     private var matchingBusInfo: BusInfo? {
         // Normalize the input plate number for comparison
@@ -18,7 +22,6 @@ struct ScanResultView: View {
         // Debug print
         print("Looking for plate: \(plateNumber)")
         print("Normalized input plate: \(normalizedPlate)")
-        print("Available bus infos: \(busInfos.map { "\($0.plateNumber) -> \(normalizePlateForComparison($0.plateNumber))" }.joined(separator: ", "))")
         
         // Try to find a match using normalized comparison
         return busInfos.first { busInfo in
@@ -36,7 +39,17 @@ struct ScanResultView: View {
     // Find the route for the bus
     private var busRoute: BusRoute? {
         guard let routeCode = matchingBusInfo?.routeCode else { return nil }
-        return busRoutes.first { $0.routeCode == routeCode }
+        let route = busRoutes.first { $0.routeCode == routeCode }
+        
+        if route == nil {
+            print("⚠️ No route found for code: \(routeCode)")
+            // Debug print all available routes
+            for availableRoute in busRoutes {
+                print("Available route: \(availableRoute.routeCode)")
+            }
+        }
+        
+        return route
     }
     
     // Route info based on the bus info
@@ -63,201 +76,146 @@ struct ScanResultView: View {
         return []
     }
     
-    // Modify the body property to show an error message for unrecognized plates
     var body: some View {
-        VStack(spacing: 0) {
-            // Header with close button
-            HStack {
-                Spacer()
-                Button(action: {
-                    dismiss()
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.title3)
-                        .foregroundColor(.secondary)
-                        .padding(8)
-                        .background(Color(.systemGray6))
-                        .clipShape(Circle())
-                }
-                .padding()
-            }
-            
-            // Bus plate number
-            Text("Bus Plate: \(formatPlateForDisplay(plateNumber))")
-                .font(.headline)
-                .padding(.bottom, 10)
-            
-            if isRecognizedPlate {
-                // Route code badge
-                ZStack {
-                    Circle()
-                        .fill(colorFromString(routeInfo.color))
-                        .frame(width: 50, height: 50)
-                    
-                    Text(routeInfo.code)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                }
-                .padding(.bottom, 10)
+        NavigationView {
+            ZStack {
+                // Background color
+                Color(.systemBackground).edgesIgnoringSafeArea(.all)
                 
-                // Route name
-                Text(routeInfo.name)
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
-                Text("Loop Line")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding(.bottom, 20)
-                
-                if stations.isEmpty {
-                    // Show message if no stations are found
-                    VStack(spacing: 20) {
-                        Image(systemName: "bus.fill")
-                            .font(.system(size: 50))
-                            .foregroundColor(.gray)
-                        
-                        Text("No route information available")
-                            .font(.headline)
-                            .foregroundColor(.gray)
-                        
-                        Text("This bus may not be in service or on a different route")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                    .padding(.top, 50)
-                } else {
-                    // Stations list
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            ForEach(Array(stations.enumerated()), id: \.offset) { index, station in
-                                StationRow(station: station, isLast: index == stations.count - 1, routeColor: colorFromString(routeInfo.color))
+                VStack(spacing: 0) {
+                    // Route header with plate number and route code
+                    VStack(spacing: 8) {
+                        HStack(spacing: 12) {
+                            Text(formatPlateForDisplay(plateNumber))
+                                .font(.headline)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                dismiss()
+                            }) {
+                                Image(systemName: "xmark")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(4)
                             }
                         }
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                        .padding()
+                        .padding(.horizontal)
+                        
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(colorFromString(routeInfo.color))
+                                    .frame(width: 40, height: 40)
+                                
+                                Text(routeInfo.code)
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                            }
+                            
+                            Text(routeInfo.name)
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                    }
+                    .padding(.vertical, 8)
+                    .background(Color(.systemBackground))
+                    
+                    // Stations list
+                    if stations.isEmpty {
+                        // Show message if no stations are found
+                        VStack(spacing: 20) {
+                            Spacer()
+                            
+                            Image(systemName: "bus.fill")
+                                .font(.system(size: 50))
+                                .foregroundColor(.gray)
+                            
+                            Text("No route information available")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                            
+                            Text("This bus may not be in service or on a different route")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            
+                            Spacer()
+                        }
+                        .padding(.top, 50)
+                    } else {
+                        // Stations list
+                        ScrollView {
+                            VStack(spacing: 0) {
+                                ForEach(Array(stations.enumerated()), id: \.offset) { index, station in
+                                    StationRowButton(
+                                        station: station,
+                                        isLast: index == stations.count - 1,
+                                        routeColor: colorFromString(routeInfo.color),
+                                        onTap: {
+                                            selectedStation = station.name
+                                            showJourneyView = true
+                                        }
+                                    )
+                                }
+                            }
+                            .background(Color(.systemBackground))
+                        }
                     }
                 }
-            } else {
-                // Show error message for unrecognized plates
-                VStack(spacing: 25) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 60))
-                        .foregroundColor(.orange)
-                        .padding(.top, 30)
-                    
-                    Text("Plate Number \nNot Recognized")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                    
-                    Text("This bus plate is not in our database. Please make sure you've correctly positioned the camera and try again.")
-                        .font(.body)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 30)
-                        .fixedSize(horizontal: false, vertical: true)
-                    
-                    VStack(spacing: 15) {
-                        Text("Tips:")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, 30)
-                        
-                        HStack(alignment: .top, spacing: 15) {
-                            Image(systemName: "1.circle.fill")
-                                .foregroundColor(.blue)
-                            
-                            Text("Make sure the plate is clearly visible and well-lit")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                            
-                            Spacer()
-                        }
-                        .padding(.horizontal, 30)
-                        
-                        HStack(alignment: .top, spacing: 15) {
-                            Image(systemName: "2.circle.fill")
-                                .foregroundColor(.blue)
-                            
-                            Text("Avoid scanning when the bus is moving")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                            
-                            Spacer()
-                        }
-                        .padding(.horizontal, 30)
-                        
-                        HStack(alignment: .top, spacing: 15) {
-                            Image(systemName: "3.circle.fill")
-                                .foregroundColor(.blue)
-                            
-                            Text("Position the plate within \nthe scanning frame")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                            
-                            Spacer()
-                        }
-                        .padding(.horizontal, 30)
-                    }
-                    .padding(.vertical, 20)
-                    
-                    Button(action: {
-                        dismiss()
-                    }) {
-                        Text("Try Again")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(width: 200, height: 50)
-                            .background(Color.blue)
-                            .cornerRadius(10)
-                    }
-                    .padding(.bottom, 30)
-                    
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity)
-                .background(Color(.systemBackground))
-                .cornerRadius(20)
-                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
+                .navigationBarHidden(true)
             }
         }
-        .background(Color(.systemGray6).edgesIgnoringSafeArea(.all))
+        .fullScreenCover(isPresented: $showJourneyView) {
+            if let busInfo = matchingBusInfo {
+                JourneyView(
+                    busInfo: busInfo,
+                    initialState: .start,
+                    onJourneyComplete: {
+                        showJourneyView = false
+                    }
+                )
+            }
+        }
         .onAppear {
             // Debug print to check what's happening
             print("Scanned plate: \(plateNumber)")
             print("Normalized plate for comparison: \(normalizePlateForComparison(plateNumber))")
             print("Available bus infos: \(busInfos.count)")
-            print("Available bus infos: \(busInfos.map { "\($0.plateNumber): \($0.routeCode)" }.joined(separator: ", "))")
+            print("Available routes: \(busRoutes.count)")
             
-            if let match = matchingBusInfo {
-                print("Found matching bus info: \(match.plateNumber) with route \(match.routeCode)")
-                updateLastSeen()
-            } else {
-                // Check if this plate is in the predefined list in DataSeeder
-                if isPredefinedPlate(plateNumber) {
-                    print("Plate is in predefined list but not in database, adding it")
-                    addPredefinedBusInfo()
+            // Force a refresh of the matchingBusInfo
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                if matchingBusInfo != nil {
+                    print("Found matching bus info")
+                    updateLastSeen()
                 } else {
-                    print("No matching bus info found in database")
-                    // We don't add plates that aren't in our predefined list
+                    // Check if this plate is in the predefined list in DataSeeder
+                    if isPredefinedPlate(plateNumber) {
+                        print("Plate is in predefined list but not in database, adding it")
+                        addPredefinedBusInfo()
+                        
+                        // Force a UI refresh after adding the bus info
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            forceRefresh.toggle() // Toggle to force a refresh
+                            // This will trigger a UI refresh
+                            if matchingBusInfo != nil {
+                                print("Successfully added and matched bus info")
+                            } else {
+                                print("Failed to match bus info after adding")
+                            }
+                        }
+                    } else {
+                        print("No matching bus info found in database")
+                    }
                 }
             }
         }
+        .id(forceRefresh) // Use the state to force a refresh when needed
     }
     
     // Function to normalize plate number for comparison
@@ -266,23 +224,7 @@ struct ScanResultView: View {
         let normalized = plate.uppercased()
             .filter { $0.isLetter || $0.isNumber }
         
-        print("Normalized plate: \(normalized) from original: \(plate)")
         return normalized
-    }
-    
-    private func saveBusInfo() {
-        // We don't want to save bus info for plates that aren't in our predefined list
-        // This function is now just used to update the last seen time for known buses
-        
-        // The matchingBusInfo computed property already checks if the plate exists
-        // If it doesn't find a match, we don't need to do anything here
-        print("No matching bus info found in database for plate: \(plateNumber)")
-        // We don't insert anything into the database for unknown plates
-    }
-
-    // Add a new computed property to check if the plate is recognized
-    private var isRecognizedPlate: Bool {
-        return matchingBusInfo != nil
     }
     
     private func updateLastSeen() {
@@ -299,97 +241,156 @@ struct ScanResultView: View {
         }
     }
     
-    // Check if the plate is in the predefined list in DataSeeder
+    // Breaking up the large array into a function to avoid compiler issues
     private func isPredefinedPlate(_ plate: String) -> Bool {
-        // List of predefined plates from DataSeeder - update to match the no-space format
-        let predefinedPlates = [
-            "B7566PAA", "B7266JF", "B7466PAA", "B7366JE",
-            "B7366PAA", "B7866PAA", "B7666PAA", "B7966PAA",
-            "B7002PGX", "B7166PAA", "B7766PAA" // Removed duplicate B7866PAA
-        ]
-        
-        // Normalize the input plate and all predefined plates for comparison
+        // Normalize the input plate for comparison
         let normalizedInput = normalizePlateForComparison(plate)
         
-        let result = predefinedPlates.contains { predefinedPlate in
-            let normalizedPredefined = normalizePlateForComparison(predefinedPlate)
-            let matches = normalizedInput == normalizedPredefined
-            
-            // Debug output
-            if matches {
-                print("✅ Matched plate \(plate) with predefined \(predefinedPlate)")
+        // Check first group of plates
+        let group1 = ["B7566PAA", "B7266JF", "B7466PAA", "B7366JE"]
+        for predefinedPlate in group1 {
+            if normalizedInput == normalizePlateForComparison(predefinedPlate) {
+                return true
             }
-            
-            return matches
         }
         
-        if !result {
-            print("❌ No match found for plate: \(plate)")
+        // Check second group of plates
+        let group2 = ["B7366PAA", "B7866PAA", "B7666PAA", "B7966PAA"]
+        for predefinedPlate in group2 {
+            if normalizedInput == normalizePlateForComparison(predefinedPlate) {
+                return true
+            }
         }
         
-        return result
+        // Check third group of plates
+        let group3 = ["B7002PGX", "B7166PAA", "B7766PAA"]
+        for predefinedPlate in group3 {
+            if normalizedInput == normalizePlateForComparison(predefinedPlate) {
+                return true
+            }
+        }
+        
+        return false
     }
 
-    // Add a bus info entry for a predefined plate
+    // Simplify the plate-to-route mapping to avoid compiler issues
+    private func getRouteInfoForPlate(_ plate: String) -> (code: String, name: String, startPoint: String, endPoint: String)? {
+        let normalizedPlate = normalizePlateForComparison(plate)
+        
+        // Group 1
+        if normalizedPlate == normalizePlateForComparison("B7566PAA") ||
+           normalizedPlate == normalizePlateForComparison("B7266JF") ||
+           normalizedPlate == normalizePlateForComparison("B7466PAA") {
+            return ("GS", "Greenwich - Sektor 1.3 Loop Line", "Greenwich Park", "Halte Sektor 1.3")
+        }
+        
+        // Group 2
+        if normalizedPlate == normalizePlateForComparison("B7366JE") {
+            return ("ID1", "Intermoda - De Park 1", "Intermoda", "De Park 1")
+        }
+        
+        // Group 3
+        if normalizedPlate == normalizePlateForComparison("B7366PAA") ||
+           normalizedPlate == normalizePlateForComparison("B7866PAA") {
+            return ("ID2", "Intermoda - De Park 2", "Intermoda", "De Park 2")
+        }
+        
+        // Group 4
+        if normalizedPlate == normalizePlateForComparison("B7666PAA") ||
+           normalizedPlate == normalizePlateForComparison("B7966PAA") {
+            return ("IS", "Intermoda - Halte Sektor 1.3", "Intermoda", "Halte Sektor 1.3")
+        }
+        
+        // Group 5
+        if normalizedPlate == normalizePlateForComparison("B7002PGX") {
+            return ("EC", "Electric Line | Intermoda - ICE - QBIG - Ara Rasa - The Breeze - Digital Hub - AEON Mall Loop Line", "Intermoda", "AEON Mall")
+        }
+        
+        // Group 6
+        if normalizedPlate == normalizePlateForComparison("B7166PAA") {
+            return ("BC", "The Breeze - AEON - ICE - The Breeze Loop Line", "The Breeze", "The Breeze")
+        }
+        
+        // Group 7
+        if normalizedPlate == normalizePlateForComparison("B7766PAA") {
+            return ("IV", "Intermoda - Vanya", "Intermoda", "Vanya Park")
+        }
+        
+        return nil
+    }
+
+    // Simplified version of addPredefinedBusInfo to avoid compiler issues
     private func addPredefinedBusInfo() {
-        // Map of predefined plates to their route info - update to match the no-space format
-        let plateToRouteMap: [String: (code: String, name: String)] = [
-            "B7566PAA": ("GS", "Greenwich - Sektor 1.3 Loop Line"),
-            "B7266JF": ("GS", "Greenwich - Sektor 1.3 Loop Line"),
-            "B7466PAA": ("GS", "Greenwich - Sektor 1.3 Loop Line"),
-            "B7366JE": ("ID1", "Intermoda - De Park 1"),
-            "B7366PAA": ("ID2", "Intermoda - De Park 2"),
-            "B7866PAA": ("ID2", "Intermoda - De Park 2"), // This key was duplicated
-            "B7666PAA": ("IS", "Intermoda - Halte Sektor 1.3"),
-            "B7966PAA": ("IS", "Intermoda - Halte Sektor 1.3"),
-            "B7002PGX": ("EC", "Electric Line | Intermoda - ICE - QBIG - Ara Rasa - The Breeze - Digital Hub - AEON Mall Loop Line"),
-            "B7166PAA": ("BC", "The Breeze - AEON - ICE - The Breeze Loop Line"),
-            // Removed duplicate key B7866PAA
-            "B7766PAA": ("IV", "Intermoda - Vanya")
-        ]
-        
-        // Normalize the input plate for comparison
-        let normalizedInput = normalizePlateForComparison(plateNumber)
-        
-        // Find the matching route info using normalized comparison
-        let matchingKey = plateToRouteMap.keys.first { normalizedKey in
-            normalizedInput == normalizePlateForComparison(normalizedKey)
+        guard let routeInfo = getRouteInfoForPlate(plateNumber) else {
+            print("No matching route info found for plate: \(plateNumber)")
+            return
         }
         
-        if let matchingKey = matchingKey, let routeInfo = plateToRouteMap[matchingKey] {
-            // Use the original format from the database for consistency
-            let formattedPlate = matchingKey
-            
-            // Create and insert the bus info
-            let busInfo = BusInfo(
-                plateNumber: formattedPlate,
-                routeCode: routeInfo.code,
-                routeName: routeInfo.name,
-                startPoint: "Unknown", // Default value
-                endPoint: routeInfo.name.components(separatedBy: " - ").last ?? "Unknown",
-                estimatedTime: 30, // Default value in minutes
-                distance: 0.5 // Default value in km
-            )
-            
-            // Check for duplicates one more time before inserting
-            let duplicateCheck = busInfos.first { busInfo in
-                normalizePlateForComparison(busInfo.plateNumber) == normalizedInput
-            }
-            
-            if duplicateCheck == nil {
-                modelContext.insert(busInfo)
-                
-                // Try to save changes
-                do {
-                    try modelContext.save()
-                    print("Added predefined bus info for plate: \(formattedPlate)")
-                } catch {
-                    print("Error adding predefined bus info: \(error.localizedDescription)")
-                }
-            } else {
-                print("Duplicate check caught a potential duplicate entry")
-            }
+        // Create and insert the bus info
+        let busInfo = BusInfo(
+            plateNumber: plateNumber,
+            routeCode: routeInfo.code,
+            routeName: routeInfo.name,
+            startPoint: routeInfo.startPoint,
+            endPoint: routeInfo.endPoint,
+            estimatedTime: 30, // Default value in minutes
+            distance: 0.5 // Default value in km
+        )
+        
+        // Check for duplicates before inserting
+        let duplicateCheck = busInfos.first { existingBusInfo in
+            normalizePlateForComparison(existingBusInfo.plateNumber) == normalizePlateForComparison(plateNumber)
         }
+        
+        if duplicateCheck == nil {
+            modelContext.insert(busInfo)
+            
+            // Try to save changes
+            do {
+                try modelContext.save()
+                print("Added predefined bus info for plate: \(plateNumber)")
+            } catch {
+                print("Error adding predefined bus info: \(error.localizedDescription)")
+            }
+        } else {
+            print("Duplicate check caught a potential duplicate entry")
+        }
+    }
+    
+    private func createTime(hour: Int, minute: Int) -> Date {
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month, .day], from: Date())
+        components.hour = hour
+        components.minute = minute
+        return calendar.date(from: components) ?? Date()
+    }
+    
+    private func colorFromString(_ colorName: String) -> Color {
+        switch colorName.lowercased() {
+        case "purple": return .purple
+        case "blue": return .blue
+        case "green": return .green
+        case "orange": return .orange
+        case "lightblue": return Color(red: 64/255, green: 224/255, blue: 208/255)
+        case "pink": return Color(red: 219/255, green: 112/255, blue: 147/255)
+        case "darkgreen": return Color(red: 154/255, green: 205/255, blue: 50/255)
+        case "navy": return Color(red: 0/255, green: 0/255, blue: 128/255)
+        case "red": return .red
+        case "teal": return Color(red: 0/255, green: 128/255, blue: 128/255)  // Added teal color
+        case "black": return Color(red: 128/255, green: 128/255, blue: 128/255)
+        default: return .gray
+        }
+    }
+
+    // Add a new function to format plate numbers for display
+    private func formatPlateForDisplay(_ plate: String) -> String {
+        // If the plate already has spaces, return it as is
+        if plate.contains(" ") {
+            return plate
+        }
+        
+        // Otherwise, format it with spaces
+        return formatPlateNumber(plate) ?? plate
     }
     
     // Format a plate number in the standard format: B 1234 XYZ
@@ -433,95 +434,72 @@ struct ScanResultView: View {
         
         return nil
     }
-    
-    private func createTime(hour: Int, minute: Int) -> Date {
-        let calendar = Calendar.current
-        var components = calendar.dateComponents([.year, .month, .day], from: Date())
-        components.hour = hour
-        components.minute = minute
-        return calendar.date(from: components) ?? Date()
-    }
-    
-    private func colorFromString(_ colorName: String) -> Color {
-        switch colorName.lowercased() {
-        case "purple": return .purple
-        case "blue": return .blue
-        case "green": return .green
-        case "orange": return .orange
-        case "lightblue": return Color(red: 64/255, green: 224/255, blue: 208/255)
-        case "pink": return Color(red: 219/255, green: 112/255, blue: 147/255)
-        case "darkgreen": return Color(red: 154/255, green: 205/255, blue: 50/255)
-        case "navy": return Color(red: 0/255, green: 0/255, blue: 128/255)
-        case "red": return .red
-        case "black": return Color(red: 128/255, green: 128/255, blue: 128/255) // Changed from black to gray for better visibility in dark mode
-        default: return .gray
-        }
-    }
-
-    // Add a new function to format plate numbers for display
-    private func formatPlateForDisplay(_ plate: String) -> String {
-        // If the plate already has spaces, return it as is
-        if plate.contains(" ") {
-            return plate
-        }
-        
-        // Otherwise, format it with spaces
-        return formatPlateNumber(plate) ?? plate
-    }
 }
 
-struct StationRow: View {
+struct StationRowButton: View {
     let station: Station
     let isLast: Bool
     let routeColor: Color
+    let onTap: () -> Void
     
     var body: some View {
-        HStack(alignment: .top, spacing: 15) {
-            // Station indicator and line
-            VStack(spacing: 0) {
-                Circle()
-                    .fill(stationColor)
-                    .frame(width: 20, height: 20)
-                
-                if !isLast {
-                    Rectangle()
-                        .fill(routeColor)
-                        .frame(width: 3)
-                        .frame(height: 40)
-                }
-            }
-            
-            // Station info
-            VStack(alignment: .leading, spacing: 2) {
-                if station.isPreviousStation {
-                    Text("Previous station")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                } else if station.isCurrentStation {
-                    Text("Current station")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                } else if station.isNextStation {
-                    Text("Next station")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+        Button(action: onTap) {
+            HStack(alignment: .top, spacing: 15) {
+                // Station indicator and line
+                VStack(spacing: 0) {
+                    Circle()
+                        .fill(stationColor)
+                        .frame(width: 16, height: 16)
+                    
+                    if !isLast {
+                        Rectangle()
+                            .fill(routeColor)
+                            .frame(width: 2)
+                            .frame(height: 40)
+                    }
                 }
                 
-                Text(station.name)
-                    .font(.headline)
+                // Station info
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(station.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    if station.isPreviousStation {
+                        Text("Previous station")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else if station.isCurrentStation {
+                        Text("Current station")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else if station.isNextStation {
+                        Text("Next station")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.vertical, 5)
+                
+                Spacer()
+                
+                // Distance and arrival time
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("0.1km")
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                    
+                    // Arrival time
+                    if let time = station.arrivalTime {
+                        Text(timeFormatter.string(from: time))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
-            .padding(.vertical, 5)
-            
-            Spacer()
-            
-            // Arrival time
-            if let time = station.arrivalTime {
-                Text(timeFormatter.string(from: time))
-                    .font(.headline)
-                    .foregroundColor(.secondary)
-            }
+            .padding(.horizontal, 16)
         }
-        .padding(.vertical, 5)
+        .buttonStyle(PlainButtonStyle())
     }
     
     private var stationColor: Color {
@@ -532,18 +510,18 @@ struct StationRow: View {
         } else if station.isNextStation {
             return routeColor
         } else {
-            return routeColor
+            return routeColor.opacity(0.7)
         }
     }
     
     private var timeFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH.mm"
+        formatter.dateFormat = "HH:mm"
         return formatter
     }
 }
 
-
 #Preview {
-    ScanResultView(plateNumber: "B 7566 PAA")
+    ScanResultView(plateNumber: "B 7466 PAA")
+        
 }

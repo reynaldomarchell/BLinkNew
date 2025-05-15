@@ -1,125 +1,116 @@
 import SwiftUI
 import SwiftData
 
+enum SortOrder {
+    case newest
+    case oldest
+    case alphabetical
+}
+
 struct HistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \BusInfo.lastSeen, order: .reverse) private var recentBuses: [BusInfo]
+    @Query private var busRoutes: [BusRoute]
     
     @State private var searchText = ""
-    @State private var selectedTab = 0
+    @State private var sortOrder: SortOrder = .newest
     
     var onSelectBus: (String) -> Void
     
     var filteredBuses: [BusInfo] {
-        if searchText.isEmpty {
-            return recentBuses
-        } else {
-            return recentBuses.filter { busInfo in
-                busInfo.plateNumber.localizedCaseInsensitiveContains(searchText) ||
-                busInfo.routeName.localizedCaseInsensitiveContains(searchText) ||
-                busInfo.routeCode.localizedCaseInsensitiveContains(searchText)
-            }
+        let filtered = searchText.isEmpty ? recentBuses : recentBuses.filter { busInfo in
+            busInfo.plateNumber.localizedCaseInsensitiveContains(searchText) ||
+            busInfo.routeName.localizedCaseInsensitiveContains(searchText) ||
+            busInfo.routeCode.localizedCaseInsensitiveContains(searchText)
+        }
+        
+        switch sortOrder {
+        case .newest:
+            return filtered.sorted { $0.lastSeen > $1.lastSeen }
+        case .oldest:
+            return filtered.sorted { $0.lastSeen < $1.lastSeen }
+        case .alphabetical:
+            return filtered.sorted { $0.plateNumber < $1.plateNumber }
+        }
+    }
+    
+    // Helper function to get route color for a route code
+    private func getRouteColor(for routeCode: String) -> String {
+        if let route = busRoutes.first(where: { $0.routeCode == routeCode }) {
+            return route.color
+        }
+        
+        // Fallback mapping if route not found
+        switch routeCode {
+        case "BC": return "purple"
+        case "GS": return "green"
+        case "AS": return "darkgreen"
+        case "ID1": return "lightblue"
+        case "ID2": return "pink"
+        case "IV": return "darkgreen"
+        case "IS": return "orange"  // Changed from navy to orange
+        case "EC": return "teal"    // Changed from red to teal
+        default: return "blue"
         }
     }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Search bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
+                // Combined search bar with filter button
+                HStack(spacing: 8) {
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
+                        
+                        TextField("Search", text: $searchText)
+                            .foregroundColor(.primary)
+                        
+                        Spacer()
+                    }
+                    .padding(8)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(10)
                     
-                    TextField("Search", text: $searchText)
-                        .foregroundColor(.primary)
+                    Menu {
+                        Button(action: { sortOrder = .newest }) {
+                            Label("Newest First", systemImage: "arrow.down.to.line")
+                        }
+                        
+                        Button(action: { sortOrder = .oldest }) {
+                            Label("Oldest First", systemImage: "arrow.up.to.line")
+                        }
+                        
+                        Button(action: { sortOrder = .alphabetical }) {
+                            Label("Alphabetical", systemImage: "textformat.abc")
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                            .font(.system(size: 22))
+                            .foregroundColor(.blue)
+                            .frame(width: 38, height: 38)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(10)
+                    }
                 }
-                .padding(8)
-                .background(Color(.systemGray6))
-                .cornerRadius(10)
                 .padding(.horizontal)
                 .padding(.top, 8)
                 
-                // Tab selector
-                Picker("History Type", selection: $selectedTab) {
-                    Text("History").tag(0)
-                    Text("Saved Routes").tag(1)
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding()
-                
-                if selectedTab == 0 {
-                    // History list
-                    if filteredBuses.isEmpty {
-                        VStack(spacing: 20) {
-                            Spacer()
-                            
-                            Image(systemName: "clock.fill")
-                                .font(.system(size: 60))
-                                .foregroundColor(.gray)
-                            
-                            Text("No History Yet")
-                                .font(.headline)
-                                .foregroundColor(.gray)
-                            
-                            Text("Your scanned bus plates will appear here")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                                .multilineTextAlignment(.center)
-                            
-                            Spacer()
-                        }
-                        .padding()
-                    } else {
-                        List {
-                            ForEach(filteredBuses) { busInfo in
-                                Button(action: {
-                                    onSelectBus(busInfo.plateNumber)
-                                }) {
-                                    HStack {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(formatPlateForDisplay(busInfo.plateNumber))
-                                                .font(.headline)
-                                            
-                                            HStack {
-                                                HistoryRouteCodeBadge(routeCode: busInfo.routeCode)
-                                                
-                                                Text(busInfo.routeName)
-                                                    .font(.subheadline)
-                                                    .foregroundColor(.secondary)
-                                                    .lineLimit(1)
-                                            }
-                                        }
-                                        
-                                        Spacer()
-                                        
-                                        VStack(alignment: .trailing) {
-                                            Text(timeAgo(date: busInfo.lastSeen))
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                        }
-                                    }
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                            .onDelete(perform: deleteBusInfo)
-                        }
-                        .listStyle(PlainListStyle())
-                    }
-                } else {
-                    // Saved routes (placeholder for now)
+                // History list
+                if filteredBuses.isEmpty {
                     VStack(spacing: 20) {
                         Spacer()
                         
-                        Image(systemName: "star.fill")
+                        Image(systemName: "clock.fill")
                             .font(.system(size: 60))
                             .foregroundColor(.gray)
                         
-                        Text("No Saved Routes")
+                        Text("No History Yet")
                             .font(.headline)
                             .foregroundColor(.gray)
                         
-                        Text("Your favorite routes will appear here")
+                        Text("Your scanned bus plates will appear here")
                             .font(.subheadline)
                             .foregroundColor(.gray)
                             .multilineTextAlignment(.center)
@@ -127,6 +118,44 @@ struct HistoryView: View {
                         Spacer()
                     }
                     .padding()
+                } else {
+                    List {
+                        ForEach(filteredBuses) { busInfo in
+                            Button(action: {
+                                onSelectBus(busInfo.plateNumber)
+                            }) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(formatPlateForDisplay(busInfo.plateNumber))
+                                            .font(.headline)
+                                        
+                                        HStack {
+                                            HistoryRouteCodeBadge(
+                                                routeCode: busInfo.routeCode,
+                                                colorName: getRouteColor(for: busInfo.routeCode)
+                                            )
+                                            
+                                            Text(busInfo.routeName)
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    VStack(alignment: .trailing) {
+                                        Text(timeAgo(date: busInfo.lastSeen))
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        .onDelete(perform: deleteBusInfo)
+                    }
+                    .listStyle(PlainListStyle())
                 }
             }
             .navigationBarTitle("History", displayMode: .inline)
@@ -136,6 +165,17 @@ struct HistoryView: View {
                     dismiss()
                 }
             )
+        }
+    }
+    
+    private var sortOrderLabel: String {
+        switch sortOrder {
+        case .newest:
+            return "Newest First"
+        case .oldest:
+            return "Oldest First"
+        case .alphabetical:
+            return "Alphabetical"
         }
     }
     
@@ -209,36 +249,33 @@ struct HistoryView: View {
 
 struct HistoryRouteCodeBadge: View {
     let routeCode: String
+    let colorName: String
     
     var body: some View {
         Text(routeCode)
             .font(.caption)
             .fontWeight(.bold)
-            .foregroundColor(routeCodeColor)
+            .foregroundColor(colorFromString(colorName))
             .padding(.horizontal, 8)
             .padding(.vertical, 2)
-            .background(routeCodeColor.opacity(0.2))
+            .background(colorFromString(colorName).opacity(0.2))
             .cornerRadius(4)
     }
     
-    private var routeCodeColor: Color {
-        switch routeCode {
-        case "BC":
-            return .purple
-        case "GS":
-            return .green
-        case "AS":
-            return Color(red: 34/255, green: 139/255, blue: 34/255)
-        case "ID1":
-            return Color(red: 64/255, green: 224/255, blue: 208/255)
-        case "ID2":
-            return Color(red: 219/255, green: 112/255, blue: 147/255)
-        case "IV":
-            return Color(red: 154/255, green: 205/255, blue: 50/255)
-        case "IS":
-            return Color(red: 0/255, green: 128/255, blue: 128/255)
-        default:
-            return .blue
+    private func colorFromString(_ colorName: String) -> Color {
+        switch colorName.lowercased() {
+        case "purple": return .purple
+        case "blue": return .blue
+        case "green": return .green
+        case "orange": return .orange
+        case "lightblue": return Color(red: 64/255, green: 224/255, blue: 208/255)
+        case "pink": return Color(red: 219/255, green: 112/255, blue: 147/255)
+        case "darkgreen": return Color(red: 154/255, green: 205/255, blue: 50/255)
+        case "navy": return Color(red: 0/255, green: 0/255, blue: 128/255)
+        case "red": return .red
+        case "teal": return .teal
+        case "black": return Color(red: 128/255, green: 128/255, blue: 128/255)
+        default: return .gray
         }
     }
 }

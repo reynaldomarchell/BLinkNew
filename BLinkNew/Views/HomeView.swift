@@ -200,16 +200,13 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showScanResult) {
             if let plate = recognizedPlate {
-                JourneyStartView(plateNumber: plate, onStartJourney: { busInfo in
-                    activeJourney = busInfo
-                    showJourneyView = true
-                })
+                ScanResultView(plateNumber: plate)
             }
         }
         .sheet(isPresented: $isShowingManualInput) {
             ManualPlateInputView(onSelectBus: { plateNumber in
                 // Find the bus info for this plate number
-                if let busInfo = findBusInfo(for: plateNumber) {
+                if findBusInfo(for: plateNumber) != nil {
                     recognizedPlate = plateNumber
                     showScanResult = true
                     isShowingManualInput = false
@@ -217,7 +214,7 @@ struct HomeView: View {
             })
         }
         .fullScreenCover(isPresented: $showTutorial) {
-            TutorialView()
+            TutorialView(showTutorial: $showTutorial)
         }
         .sheet(isPresented: $showHistory) {
             HistoryView(onSelectBus: { plateNumber in
@@ -228,9 +225,13 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showJourneyView) {
             if let journey = activeJourney {
-                CurrentJourneyView(busInfo: journey, onJourneyComplete: {
-                    activeJourney = nil
-                })
+                JourneyView(
+                    busInfo: journey,
+                    initialState: .ongoing,
+                    onJourneyComplete: {
+                        activeJourney = nil
+                    }
+                )
             }
         }
         .alert(isPresented: .constant(!isCameraAuthorized && AVCaptureDevice.authorizationStatus(for: .video) == .denied)) {
