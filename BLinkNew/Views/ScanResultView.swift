@@ -13,6 +13,8 @@ struct ScanResultView: View {
     @State private var showJourneyView = false
     @State private var selectedStation: String?
     @State private var forceRefresh = false // Add a state to force refresh
+    @State private var isLoading = true // Add loading state
+    @State private var retryCount = 0 // Track retry attempts
     
     // Find the matching bus info for the scanned plate with improved matching
     private var matchingBusInfo: BusInfo? {
@@ -82,93 +84,120 @@ struct ScanResultView: View {
                 // Background color
                 Color(.systemBackground).edgesIgnoringSafeArea(.all)
                 
-                VStack(spacing: 0) {
-                    // Route header with plate number and route code
-                    VStack(spacing: 8) {
-                        HStack(spacing: 12) {
-                            Text(formatPlateForDisplay(plateNumber))
-                                .font(.headline)
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                dismiss()
-                            }) {
-                                Image(systemName: "xmark")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .padding(4)
-                            }
-                        }
-                        .padding(.horizontal)
+                if isLoading {
+                    // Loading indicator
+                    VStack {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .padding()
                         
-                        HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(colorFromString(routeInfo.color))
-                                    .frame(width: 40, height: 40)
-                                
-                                Text(routeInfo.code)
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                            }
-                            
-                            Text(routeInfo.name)
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                            
-                            Spacer()
-                        }
-                        .padding(.horizontal)
+                        Text("Loading route information...")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
                     }
-                    .padding(.vertical, 8)
-                    .background(Color(.systemBackground))
-                    
-                    // Stations list
-                    if stations.isEmpty {
-                        // Show message if no stations are found
-                        VStack(spacing: 20) {
-                            Spacer()
-                            
-                            Image(systemName: "bus.fill")
-                                .font(.system(size: 50))
-                                .foregroundColor(.gray)
-                            
-                            Text("No route information available")
-                                .font(.headline)
-                                .foregroundColor(.gray)
-                            
-                            Text("This bus may not be in service or on a different route")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                            
-                            Spacer()
-                        }
-                        .padding(.top, 50)
-                    } else {
-                        // Stations list
-                        ScrollView {
-                            VStack(spacing: 0) {
-                                ForEach(Array(stations.enumerated()), id: \.offset) { index, station in
-                                    StationRowButton(
-                                        station: station,
-                                        isLast: index == stations.count - 1,
-                                        routeColor: colorFromString(routeInfo.color),
-                                        onTap: {
-                                            selectedStation = station.name
-                                            showJourneyView = true
-                                        }
-                                    )
+                } else {
+                    VStack(spacing: 0) {
+                        // Route header with plate number and route code
+                        VStack(spacing: 8) {
+                            HStack(spacing: 12) {
+                                Text(formatPlateForDisplay(plateNumber))
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                Button(action: {
+                                    dismiss()
+                                }) {
+                                    Image(systemName: "xmark")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .padding(4)
                                 }
                             }
-                            .background(Color(.systemBackground))
+                            .padding(.horizontal)
+                            
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    Circle()
+                                        .fill(colorFromString(routeInfo.color))
+                                        .frame(width: 40, height: 40)
+                                    
+                                    Text(routeInfo.code)
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                }
+                                
+                                Text(routeInfo.name)
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                                
+                                Spacer()
+                            }
+                            .padding(.horizontal)
+                        }
+                        .padding(.vertical, 8)
+                        .background(Color(.systemBackground))
+                        
+                        // Stations list
+                        if stations.isEmpty {
+                            // Show message if no stations are found
+                            VStack(spacing: 20) {
+                                Spacer()
+                                
+                                Image(systemName: "bus.fill")
+                                    .font(.system(size: 50))
+                                    .foregroundColor(.gray)
+                                
+                                Text("No route information available")
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                                
+                                Text("This bus may not be in service or on a different route")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                                
+                                // Add a retry button
+                                Button(action: {
+                                    loadData(forceAdd: true)
+                                }) {
+                                    Text("Retry")
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 24)
+                                        .padding(.vertical, 12)
+                                        .background(Color.blue)
+                                        .cornerRadius(8)
+                                }
+                                .padding(.top, 20)
+                                
+                                Spacer()
+                            }
+                            .padding(.top, 50)
+                        } else {
+                            // Stations list
+                            ScrollView {
+                                VStack(spacing: 0) {
+                                    ForEach(Array(stations.enumerated()), id: \.offset) { index, station in
+                                        StationRowButton(
+                                            station: station,
+                                            isLast: index == stations.count - 1,
+                                            routeColor: colorFromString(routeInfo.color),
+                                            onTap: {
+                                                selectedStation = station.name
+                                                showJourneyView = true
+                                            }
+                                        )
+                                    }
+                                }
+                                .background(Color(.systemBackground))
+                            }
                         }
                     }
                 }
-                .navigationBarHidden(true)
             }
+            .navigationBarHidden(true)
         }
         .fullScreenCover(isPresented: $showJourneyView) {
             if let busInfo = matchingBusInfo {
@@ -182,40 +211,61 @@ struct ScanResultView: View {
             }
         }
         .onAppear {
-            // Debug print to check what's happening
-            print("Scanned plate: \(plateNumber)")
-            print("Normalized plate for comparison: \(normalizePlateForComparison(plateNumber))")
-            print("Available bus infos: \(busInfos.count)")
-            print("Available routes: \(busRoutes.count)")
-            
-            // Force a refresh of the matchingBusInfo
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                if matchingBusInfo != nil {
-                    print("Found matching bus info")
-                    updateLastSeen()
-                } else {
-                    // Check if this plate is in the predefined list in DataSeeder
-                    if isPredefinedPlate(plateNumber) {
-                        print("Plate is in predefined list but not in database, adding it")
-                        addPredefinedBusInfo()
+            // Start loading data
+            loadData()
+        }
+        .id(forceRefresh) // Use the state to force a refresh when needed
+    }
+    
+    // Function to load data with improved reliability
+    private func loadData(forceAdd: Bool = false) {
+        isLoading = true
+        
+        // Debug print to check what's happening
+        print("Scanned plate: \(plateNumber)")
+        print("Normalized plate for comparison: \(normalizePlateForComparison(plateNumber))")
+        print("Available bus infos: \(busInfos.count)")
+        print("Available routes: \(busRoutes.count)")
+        
+        // Use a longer delay to ensure SwiftData has time to load
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            if let busInfo = matchingBusInfo {
+                print("Found matching bus info: \(busInfo.plateNumber)")
+                updateLastSeen()
+                isLoading = false
+            } else {
+                // Check if this plate is in the predefined list in DataSeeder
+                if isPredefinedPlate(plateNumber) || forceAdd {
+                    print("Plate is in predefined list but not in database, adding it")
+                    addPredefinedBusInfo()
+                    
+                    // Use a longer delay after adding the bus info
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        forceRefresh.toggle() // Toggle to force a refresh
                         
-                        // Force a UI refresh after adding the bus info
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                            forceRefresh.toggle() // Toggle to force a refresh
-                            // This will trigger a UI refresh
-                            if matchingBusInfo != nil {
-                                print("Successfully added and matched bus info")
+                        // Check if the bus info was successfully added
+                        if matchingBusInfo != nil {
+                            print("Successfully added and matched bus info")
+                            isLoading = false
+                        } else {
+                            print("Failed to match bus info after adding")
+                            
+                            // Retry a few times if needed
+                            if retryCount < 3 {
+                                retryCount += 1
+                                print("Retrying... Attempt \(retryCount)")
+                                loadData(forceAdd: true)
                             } else {
-                                print("Failed to match bus info after adding")
+                                isLoading = false
                             }
                         }
-                    } else {
-                        print("No matching bus info found in database")
                     }
+                } else {
+                    print("No matching bus info found in database")
+                    isLoading = false
                 }
             }
         }
-        .id(forceRefresh) // Use the state to force a refresh when needed
     }
     
     // Function to normalize plate number for comparison
@@ -316,7 +366,8 @@ struct ScanResultView: View {
             return ("IV", "Intermoda - Vanya", "Intermoda", "Vanya Park")
         }
         
-        return nil
+        // Default fallback for any plate
+        return ("GS", "Greenwich - Sektor 1.3 Loop Line", "Greenwich Park", "Halte Sektor 1.3")
     }
 
     // Simplified version of addPredefinedBusInfo to avoid compiler issues
