@@ -13,8 +13,7 @@ struct ScanResultView: View {
     @State private var showJourneyView = false
     @State private var selectedStation: String?
     @State private var forceRefresh = false // Add a state to force refresh
-    @State private var isLoading = true // Add loading state
-    @State private var retryCount = 0 // Track retry attempts
+    @State private var isLoading = true // Add this line after other @State variables
     
     // Find the matching bus info for the scanned plate with improved matching
     private var matchingBusInfo: BusInfo? {
@@ -78,21 +77,21 @@ struct ScanResultView: View {
         return []
     }
     
+    // Update the body to handle loading state properly
     var body: some View {
         NavigationView {
             ZStack {
                 // Background color
                 Color(.systemBackground).edgesIgnoringSafeArea(.all)
                 
+                // Loading indicator
                 if isLoading {
-                    // Loading indicator
                     VStack {
                         ProgressView()
                             .scaleEffect(1.5)
                             .padding()
                         
                         Text("Loading route information...")
-                            .font(.headline)
                             .foregroundColor(.secondary)
                     }
                 } else {
@@ -158,20 +157,6 @@ struct ScanResultView: View {
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal)
                                 
-                                // Add a retry button
-                                Button(action: {
-                                    loadData(forceAdd: true)
-                                }) {
-                                    Text("Retry")
-                                        .font(.headline)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 24)
-                                        .padding(.vertical, 12)
-                                        .background(Color.blue)
-                                        .cornerRadius(8)
-                                }
-                                .padding(.top, 20)
-                                
                                 Spacer()
                             }
                             .padding(.top, 50)
@@ -210,62 +195,11 @@ struct ScanResultView: View {
                 )
             }
         }
-        .onAppear {
-            // Start loading data
-            loadData()
+        .task {
+            // More reliable than onAppear for SwiftData
+            await loadData()
         }
         .id(forceRefresh) // Use the state to force a refresh when needed
-    }
-    
-    // Function to load data with improved reliability
-    private func loadData(forceAdd: Bool = false) {
-        isLoading = true
-        
-        // Debug print to check what's happening
-        print("Scanned plate: \(plateNumber)")
-        print("Normalized plate for comparison: \(normalizePlateForComparison(plateNumber))")
-        print("Available bus infos: \(busInfos.count)")
-        print("Available routes: \(busRoutes.count)")
-        
-        // Use a longer delay to ensure SwiftData has time to load
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            if let busInfo = matchingBusInfo {
-                print("Found matching bus info: \(busInfo.plateNumber)")
-                updateLastSeen()
-                isLoading = false
-            } else {
-                // Check if this plate is in the predefined list in DataSeeder
-                if isPredefinedPlate(plateNumber) || forceAdd {
-                    print("Plate is in predefined list but not in database, adding it")
-                    addPredefinedBusInfo()
-                    
-                    // Use a longer delay after adding the bus info
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        forceRefresh.toggle() // Toggle to force a refresh
-                        
-                        // Check if the bus info was successfully added
-                        if matchingBusInfo != nil {
-                            print("Successfully added and matched bus info")
-                            isLoading = false
-                        } else {
-                            print("Failed to match bus info after adding")
-                            
-                            // Retry a few times if needed
-                            if retryCount < 3 {
-                                retryCount += 1
-                                print("Retrying... Attempt \(retryCount)")
-                                loadData(forceAdd: true)
-                            } else {
-                                isLoading = false
-                            }
-                        }
-                    }
-                } else {
-                    print("No matching bus info found in database")
-                    isLoading = false
-                }
-            }
-        }
     }
     
     // Function to normalize plate number for comparison
@@ -366,8 +300,7 @@ struct ScanResultView: View {
             return ("IV", "Intermoda - Vanya", "Intermoda", "Vanya Park")
         }
         
-        // Default fallback for any plate
-        return ("GS", "Greenwich - Sektor 1.3 Loop Line", "Greenwich Park", "Halte Sektor 1.3")
+        return nil
     }
 
     // Simplified version of addPredefinedBusInfo to avoid compiler issues
@@ -484,6 +417,48 @@ struct ScanResultView: View {
         }
         
         return nil
+    }
+    
+    // Replace the onAppear block with a more reliable async loading function
+    private func loadData() async {
+        // Set loading state
+        isLoading = true
+        
+        // Debug print to check what's happening
+        print("Scanned plate: \(plateNumber)")
+        print("Normalized plate for comparison: \(normalizePlateForComparison(plateNumber))")
+        print("Available bus infos: \(busInfos.count)")
+        print("Available routes: \(busRoutes.count)")
+        
+        // Introduce a short delay to ensure database is ready
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        
+        // Check for matching bus info
+        if matchingBusInfo != nil {
+            print("Found matching bus info")
+            updateLastSeen()
+            isLoading = false
+        } else {
+            // Check if this plate is in the predefined list in DataSeeder
+            if isPredefinedPlate(plateNumber) {
+                print("Plate is in predefined list but not in database, adding it")
+                addPredefinedBusInfo()
+                
+                // Force a UI refresh after adding the bus info
+                try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+                forceRefresh.toggle() // Toggle to force a refresh
+                
+                // This will trigger a UI refresh
+                if matchingBusInfo != nil {
+                    print("Successfully added and matched bus info")
+                } else {
+                    print("Failed to match bus info after adding")
+                }
+            }
+            
+            // Ensure we're not stuck in loading state
+            isLoading = false
+        }
     }
 }
 

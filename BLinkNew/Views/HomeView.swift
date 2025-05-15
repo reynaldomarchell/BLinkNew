@@ -260,21 +260,25 @@ struct HomeView: View {
         })
     }
     
+    // Update captureAndAnalyze function to ensure proper timing
     private func captureAndAnalyze() {
         if isProcessing { return }
         
         isProcessing = true
         
-        if isPlateDetected && isValidIndonesianPlate(detectedPlateText) {
-            // If plate is already detected and valid, use the detected text
-            recognizedPlate = detectedPlateText
-            showScanResult = true
-            isProcessing = false
-        } else if let pixelBuffer = capturedImage {
-            // Otherwise try to analyze the current frame
-            analyzeImage(pixelBuffer)
-        } else {
-            isProcessing = false
+        // Add a small delay to ensure everything is ready
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if self.isPlateDetected && self.isValidIndonesianPlate(self.detectedPlateText) {
+                // If plate is already detected and valid, use the detected text
+                self.recognizedPlate = self.detectedPlateText
+                self.showScanResult = true
+                self.isProcessing = false
+            } else if let pixelBuffer = self.capturedImage {
+                // Otherwise try to analyze the current frame
+                self.analyzeImage(pixelBuffer)
+            } else {
+                self.isProcessing = false
+            }
         }
     }
     
@@ -676,7 +680,7 @@ struct CameraView: UIViewRepresentable {
                             if confidence >= 2 {
                                 plateDetected = true
                                 plateText = mostConfidentPlate
-                                print("Detected plate with confidence \(confidence): \(plateText)")
+                                print("Detected plate with confidence \(plateText)")
                             } else {
                                 plateDetected = false
                             }
