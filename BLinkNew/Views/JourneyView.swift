@@ -20,14 +20,28 @@ struct JourneyView: View {
     @State private var timer: Timer?
     @State private var showCompletionAlert = false
     @State private var selectedStation: String?
+    @State private var selectedStationIndex: Int?
+    @State private var totalStations: Int
     @State private var isEndingJourney = false
+    @State private var destinationStation: String
     
-    init(busInfo: BusInfo, initialState: JourneyState = .start, onJourneyComplete: @escaping () -> Void) {
+    init(busInfo: BusInfo, initialState: JourneyState = .start, selectedStation: String? = nil, selectedStationIndex: Int? = nil, totalStations: Int = 0, stationDistance: Double? = nil, stationTime: Int? = nil, onJourneyComplete: @escaping () -> Void) {
         self.busInfo = busInfo
         self.onJourneyComplete = onJourneyComplete
+        self.selectedStation = selectedStation
+        self.selectedStationIndex = selectedStationIndex
+        self.totalStations = totalStations
+        
+        // Always use the busInfo.endPoint as the destination
+        _destinationStation = State(initialValue: busInfo.endPoint)
         _journeyState = State(initialValue: initialState)
-        _remainingTime = State(initialValue: busInfo.estimatedTime)
+        
+        // Use the values from the busInfo directly, which should already have the correct values
         _remainingDistance = State(initialValue: busInfo.distance)
+        _remainingTime = State(initialValue: busInfo.estimatedTime)
+        
+        print("JourneyView initialized with destination: \(busInfo.endPoint)")
+        print("Distance: \(busInfo.distance), Time: \(busInfo.estimatedTime)")
     }
     
     var body: some View {
@@ -36,7 +50,7 @@ struct JourneyView: View {
                 VStack(spacing: 0) {
                     // Header text changes based on state
                     if journeyState == .start {
-                        Text("Are you ready to start journey to this destination?")
+                        Text("Are you ready to start journey to \(destinationStation)?")
                             .font(.headline)
                             .multilineTextAlignment(.center)
                             .padding(.top, 20)
@@ -92,6 +106,20 @@ struct JourneyView: View {
                     
                     // Print debug info
                     print("JourneyView appeared with state: \(journeyState)")
+                    print("Destination: \(destinationStation)")
+                    print("Remaining time: \(remainingTime) minutes")
+                    print("Remaining distance: \(remainingDistance) km")
+                    print("BusInfo endpoint: \(busInfo.endPoint)")
+                    
+                    if let station = selectedStation {
+                        print("Selected station: \(station)")
+                    } else {
+                        print("No specific station selected, using end point: \(busInfo.endPoint)")
+                    }
+                    
+                    if let index = selectedStationIndex {
+                        print("Selected station index: \(index) of \(totalStations)")
+                    }
                 }
                 .onDisappear {
                     timer?.invalidate()
@@ -149,7 +177,7 @@ struct JourneyView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     
-                    Text(busInfo.endPoint)
+                    Text(destinationStation)
                         .font(.headline)
                         .foregroundColor(.primary)
                 }
@@ -209,7 +237,7 @@ struct JourneyView: View {
     
     private var completionContent: some View {
         VStack(spacing: 24) {
-            Text("You have arrived at your destination 🎉")
+            Text("You have arrived at \(destinationStation) 🎉")
                 .font(.headline)
                 .multilineTextAlignment(.center)
             
@@ -271,11 +299,13 @@ struct JourneyView: View {
         journeyState = .ongoing
         startJourneyTimer()
         
-        // Start live activity
+        // Start live activity with the correct destination
         LiveActivityManager.shared.startBusJourney(
             busInfo: busInfo,
-            destination: busInfo.endPoint
+            destination: destinationStation // This will be the selected station
         )
+        
+        print("Started journey to: \(destinationStation)")
     }
     
     private func startJourneyTimer() {
@@ -361,7 +391,7 @@ struct JourneyView: View {
         }
         
         // Otherwise, try to format it with spaces
-        let cleaned = plate.uppercased()
+        let cleaned = plate.uppercased().filter { !$0.isWhitespace }
         
         // Try to extract components
         var regionCode = ""
