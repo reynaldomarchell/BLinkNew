@@ -64,9 +64,12 @@ struct HomeView: View {
                                 .background(Circle().fill(Color(hex: "a068ff")))
                         }
                         .padding(.trailing)
-                        .padding(.top, geometry.safeAreaInsets.top > 0 ? 0 : 8)
+                        .padding(.top, geometry.safeAreaInsets.top > 0 ? 0 : 4)
                     }
-                    .padding(.top, geometry.safeAreaInsets.top)
+                    .padding(.top, geometry.safeAreaInsets.top > 0 ? 0 : 4)
+                    
+                    // Add spacing between tutorial button and journey card
+                    Spacer().frame(height: 12)
                     
                     // Active journey card (if there's an active journey)
                     if let journey = activeJourney {
@@ -74,8 +77,7 @@ struct HomeView: View {
                             showJourneyView = true
                         }
                         .padding(.horizontal)
-                        .padding(.top, 4)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, 4)
                         .transition(.move(edge: .top))
                     }
                     
@@ -87,7 +89,7 @@ struct HomeView: View {
                         // Scanning frame - solid rectangle that turns green when plate detected
                         Rectangle()
                             .stroke(style: StrokeStyle(lineWidth: 3))
-                            .frame(width: min(geometry.size.width - 40, 300), height: 150)
+                            .frame(width: min(geometry.size.width - 40, 300), height: 180) // Increased height from 150 to 180
                             .foregroundColor(isPlateDetected ? .green : .white)
                             .overlay(
                                 GeometryReader { frameGeometry in
@@ -100,9 +102,13 @@ struct HomeView: View {
                                 }
                             )
                     }
-                    .frame(height: geometry.size.height * 0.35)
+                    .frame(height: geometry.size.height * 0.35) // Increased from 0.30 to 0.35
+                    .padding(.bottom, -10) // Reduced negative padding from -20 to -10
                     
-                    // Plate detection card area - positioned closer to the scanning frame
+                    // Add more spacing between frame and detection card
+                    Spacer().frame(height: 20)
+                    
+                    // Plate detection card area - positioned with more gap from the scanning frame
                     ZStack {
                         // Plate detection overlay with purple gradient
                         if isPlateDetected {
