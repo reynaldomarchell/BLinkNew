@@ -63,15 +63,29 @@ struct HistoryView: View {
                 HStack(spacing: 8) {
                     HStack {
                         Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
+                            .foregroundColor(Color(hex: "a068ff"))
                         
                         TextField("Search", text: $searchText)
                             .foregroundColor(.primary)
                         
                         Spacer()
+                        
+                        if !searchText.isEmpty {
+                            Button(action: {
+                                searchText = ""
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(Color(hex: "a068ff").opacity(0.7))
+                            }
+                        }
                     }
-                    .padding(8)
-                    .background(Color(.systemGray6))
+                    .padding(10)
+                    .background(Color(.systemBackground))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color(hex: "a068ff"), lineWidth: 2)
+                            .shadow(color: Color(hex: "a068ff").opacity(0.5), radius: 3, x: 0, y: 0)
+                    )
                     .cornerRadius(10)
                     
                     Menu {
@@ -89,9 +103,14 @@ struct HistoryView: View {
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                             .font(.system(size: 22))
-                            .foregroundColor(.blue)
+                            .foregroundColor(Color(hex: "a068ff"))
                             .frame(width: 38, height: 38)
-                            .background(Color(.systemGray6))
+                            .background(Color(.systemBackground))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color(hex: "a068ff"), lineWidth: 2)
+                                    .shadow(color: Color(hex: "a068ff").opacity(0.5), radius: 3, x: 0, y: 0)
+                            )
                             .cornerRadius(10)
                     }
                 }

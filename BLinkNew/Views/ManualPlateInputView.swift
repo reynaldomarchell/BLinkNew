@@ -30,7 +30,7 @@ struct ManualPlateInputView: View {
                 HStack(spacing: 0) {
                     Text("B | ")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.primary)
+                        .foregroundColor(Color(hex: "a068ff"))
                     
                     TextField("1234", text: $searchText)
                         .font(.system(size: 18))
@@ -39,12 +39,27 @@ struct ManualPlateInputView: View {
                     
                     Spacer()
                     
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
-                        .padding(.trailing, 8)
+                    if !searchText.isEmpty {
+                        Button(action: {
+                            searchText = ""
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(Color(hex: "a068ff").opacity(0.7))
+                                .padding(.trailing, 8)
+                        }
+                    } else {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(Color(hex: "a068ff"))
+                            .padding(.trailing, 8)
+                    }
                 }
                 .padding()
-                .background(Color(.systemGray6))
+                .background(Color(.systemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color(hex: "a068ff"), lineWidth: 2)
+                        .shadow(color: Color(hex: "a068ff").opacity(0.5), radius: 3, x: 0, y: 0)
+                )
                 .cornerRadius(10)
                 .padding(.horizontal)
                 .padding(.top, 8)
