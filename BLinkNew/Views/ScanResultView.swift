@@ -118,6 +118,12 @@ struct ScanResultView: View {
                 
                 Spacer()
             }
+            
+            // Add instructional text below
+            Text("Select one of the Bus Stop below to start a journey!")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .padding(.top, 8)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)

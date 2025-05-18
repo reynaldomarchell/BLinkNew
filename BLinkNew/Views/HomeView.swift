@@ -902,7 +902,7 @@ struct ActiveJourneyCard: View {
                             .font(.subheadline)
                             .foregroundColor(.white.opacity(0.8))
                         
-                        Image(systemName: "figure.walk")
+                        Image(systemName: "road.lanes")
                             .foregroundColor(.white.opacity(0.8))
                             .font(.caption)
                     }
