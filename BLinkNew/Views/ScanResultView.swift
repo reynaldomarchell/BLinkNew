@@ -97,7 +97,7 @@ struct ScanResultView: View {
                 } else {
                     VStack(spacing: 0) {
                         // Route header with plate number and route code
-                        VStack(spacing: 8) {
+                        VStack(spacing: 12) {
                             HStack(spacing: 12) {
                                 Text(formatPlateForDisplay(plateNumber))
                                     .font(.headline)
@@ -110,10 +110,11 @@ struct ScanResultView: View {
                                     Image(systemName: "xmark")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
-                                        .padding(4)
+                                        .padding(8)
+                                        .background(Color(.systemGray6).opacity(0.5))
+                                        .clipShape(Circle())
                                 }
                             }
-                            .padding(.horizontal)
                             
                             HStack(spacing: 12) {
                                 ZStack {
@@ -129,12 +130,13 @@ struct ScanResultView: View {
                                 Text(routeInfo.name)
                                     .font(.headline)
                                     .foregroundColor(.primary)
+                                    .lineLimit(2)
                                 
                                 Spacer()
                             }
-                            .padding(.horizontal)
                         }
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 16)
                         .background(Color(.systemBackground))
                         
                         // Stations list
@@ -178,6 +180,7 @@ struct ScanResultView: View {
                                     }
                                 }
                                 .background(Color(.systemBackground))
+                                .padding(.bottom, 16) // Add padding at the bottom of the list
                             }
                         }
                     }
@@ -483,12 +486,13 @@ struct StationRowButton: View {
                         Rectangle()
                             .fill(routeColor)
                             .frame(width: 2)
-                            .frame(height: 40)
+                            .frame(height: isLast ? 0 : 50)
                     }
                 }
+                .frame(width: 16)
                 
                 // Station info
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(station.name)
                         .font(.headline)
                         .foregroundColor(.primary)
@@ -507,7 +511,6 @@ struct StationRowButton: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                .padding(.vertical, 5)
                 
                 Spacer()
                 
@@ -526,6 +529,7 @@ struct StationRowButton: View {
                 }
             }
             .padding(.horizontal, 16)
+            // Remove vertical padding to ensure continuous line
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -558,5 +562,4 @@ struct StationRowButton: View {
 
 #Preview {
     ScanResultView(plateNumber: "B 7466 PAA")
-        
 }

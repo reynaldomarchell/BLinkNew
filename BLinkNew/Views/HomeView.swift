@@ -50,46 +50,40 @@ struct HomeView: View {
                 
                 // Overlay UI
                 VStack(spacing: 0) {
-                    // Header area with fixed height
-                    VStack(spacing: 0) {
-                        // Tutorial button in top right
-                        HStack {
-                            Spacer()
-                            
-                            Button(action: {
-                                showTutorial = true
-                            }) {
-                                Image(systemName: "questionmark")
-                                    .font(.title2)
-                                    .foregroundColor(.white)
-                                    .padding(12)
-                                    .background(Circle().fill(Color(hex: "a068ff")))
-                            }
-                            .padding(.trailing)
-                            .padding(.top, geometry.safeAreaInsets.top > 0 ? 0 : 8)
-                        }
-                        .padding(.top, geometry.safeAreaInsets.top)
+                    // Tutorial button in top right
+                    HStack {
+                        Spacer()
                         
-                        // Active journey card (if there's an active journey)
-                        if let journey = activeJourney {
-                            ActiveJourneyCard(busInfo: journey) {
-                                showJourneyView = true
-                            }
-                            .padding(.horizontal)
-                            .padding(.top, 4)
-                            .padding(.bottom, 8)
-                            .transition(.move(edge: .top))
+                        Button(action: {
+                            showTutorial = true
+                        }) {
+                            Image(systemName: "questionmark")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .padding(12)
+                                .background(Circle().fill(Color(hex: "a068ff")))
                         }
+                        .padding(.trailing)
+                        .padding(.top, geometry.safeAreaInsets.top > 0 ? 0 : 8)
                     }
-                    .background(Color.black.opacity(0.3))
+                    .padding(.top, geometry.safeAreaInsets.top)
+                    
+                    // Active journey card (if there's an active journey)
+                    if let journey = activeJourney {
+                        ActiveJourneyCard(busInfo: journey) {
+                            showJourneyView = true
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 4)
+                        .padding(.bottom, 8)
+                        .transition(.move(edge: .top))
+                    }
                     
                     // Flexible space that adapts based on screen size
                     Spacer(minLength: 0)
                     
                     // Scanning frame area - centered in the remaining space
                     VStack {
-                        Spacer()
-                        
                         // Scanning frame - solid rectangle that turns green when plate detected
                         Rectangle()
                             .stroke(style: StrokeStyle(lineWidth: 3))
@@ -105,12 +99,10 @@ struct HomeView: View {
                                         }
                                 }
                             )
-                        
-                        Spacer()
                     }
-                    .frame(height: geometry.size.height * 0.4)
+                    .frame(height: geometry.size.height * 0.35)
                     
-                    // Plate detection card area with fixed height
+                    // Plate detection card area - positioned closer to the scanning frame
                     ZStack {
                         // Plate detection overlay with purple gradient
                         if isPlateDetected {
@@ -142,33 +134,33 @@ struct HomeView: View {
                     }
                     .frame(height: 80)
                     
-                    // Capture button area with fixed height
-                    VStack {
-                        Button(action: {
-                            captureAndAnalyze()
-                        }) {
-                            ZStack {
-                                Circle()
-                                    .stroke(Color.white, lineWidth: 4)
-                                    .frame(width: 80, height: 80)
-                                
-                                Circle()
-                                    .fill(isProcessing ? Color.gray : Color.white)
-                                    .frame(width: 70, height: 70)
-                                
-                                if isProcessing {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .scaleEffect(1.5)
-                                }
+                    // Flexible spacer to push the capture button to the bottom
+                    Spacer()
+                    
+                    // Capture button area
+                    Button(action: {
+                        captureAndAnalyze()
+                    }) {
+                        ZStack {
+                            Circle()
+                                .stroke(Color.white, lineWidth: 4)
+                                .frame(width: 80, height: 80)
+                            
+                            Circle()
+                                .fill(isProcessing ? Color.gray : Color.white)
+                                .frame(width: 70, height: 70)
+                            
+                            if isProcessing {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(1.5)
                             }
                         }
-                        .disabled(isProcessing)
-                        .padding(.bottom, 20)
                     }
-                    .frame(height: 100)
+                    .disabled(isProcessing)
+                    .padding(.bottom, 20)
                     
-                    // Bottom tab bar with fixed height
+                    // Bottom tab bar
                     HStack {
                         Spacer()
                         
