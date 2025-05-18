@@ -59,6 +59,13 @@
 			);
 			target = D20CC6842DD99E9A00F3709C /* BLinkWidgetExtension */;
 		};
+		D20CC6B02DDA9D4700F3709C /* Exceptions for "BLinkWidget" folder in "BLinkNew" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				ScanBusIntent.swift,
+			);
+			target = D258A7982DC9C04C00B8BEB7 /* BLinkNew */;
+		};
 		D2E4CA062DD350CC00A9F523 /* Exceptions for "BLinkNew" folder in "BLinkNew" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -72,6 +79,7 @@
 		D20CC68B2DD99E9A00F3709C /* BLinkWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				D20CC6B02DDA9D4700F3709C /* Exceptions for "BLinkWidget" folder in "BLinkNew" target */,
 				D20CC69F2DD99E9B00F3709C /* Exceptions for "BLinkWidget" folder in "BLinkWidgetExtension" target */,
 			);
 			path = BLinkWidget;
@@ -289,6 +297,7 @@
 				INFOPLIST_FILE = BLinkWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BLinkWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSiriUsageDescription = "BLink uses Siri to help you quickly scan bus plates";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -318,6 +327,7 @@
 				INFOPLIST_FILE = BLinkWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = BLinkWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSiriUsageDescription = "BLink uses Siri to help you quickly scan bus plates";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -469,6 +479,7 @@
 				INFOPLIST_FILE = BLinkNew/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "BLink needs camera access to scan bus plate numbers";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "BLink needs location access to provide accurate journey information";
+				INFOPLIST_KEY_NSSiriUsageDescription = "BLink uses Siri to help you quickly scan bus plates";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -502,6 +513,7 @@
 				INFOPLIST_FILE = BLinkNew/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "BLink needs camera access to scan bus plate numbers";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "BLink needs location access to provide accurate journey information";
+				INFOPLIST_KEY_NSSiriUsageDescription = "BLink uses Siri to help you quickly scan bus plates";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

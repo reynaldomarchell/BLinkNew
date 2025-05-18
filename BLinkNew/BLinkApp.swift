@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import ActivityKit
+import AppIntents
 
 @main
 struct BLinkApp: App {
@@ -57,6 +58,25 @@ struct BLinkApp: App {
                 await LiveActivityManager.shared.forceEndAllActivities()
             }
         }
+    }
+}
+
+// Register app shortcuts
+extension BLinkApp: AppShortcutsProvider {
+    static var appShortcuts: [AppShortcut] {
+        return [
+            AppShortcut(
+                intent: ScanBusIntent(),
+                phrases: [
+                    "Scan a bus with ${applicationName}",
+                    "Open ${applicationName} scanner",
+                    "Scan bus plate with ${applicationName}",
+                    "Check bus route with ${applicationName}"
+                ],
+                shortTitle: "Scan Bus",
+                systemImageName: "bus.fill"
+            )
+        ]
     }
 }
 
