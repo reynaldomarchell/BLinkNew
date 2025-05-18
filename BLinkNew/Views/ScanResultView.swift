@@ -14,9 +14,17 @@ struct ScanResultView: View {
     @State private var selectedStation: String?
     @State private var forceRefresh = false // Add a state to force refresh
     @State private var isLoading = true // Add this line after other @State variables
+    @State private var retryCount = 0 // Add a retry counter
+    @State private var matchedBusInfo: BusInfo? = nil // Store matched bus info
+    @State private var matchedRoute: BusRoute? = nil // Store matched route
     
     // Find the matching bus info for the scanned plate with improved matching
     private var matchingBusInfo: BusInfo? {
+        // Use the stored value if available
+        if let stored = matchedBusInfo {
+            return stored
+        }
+        
         // Normalize the input plate number for comparison
         let normalizedPlate = normalizePlateForComparison(plateNumber)
         
@@ -39,6 +47,11 @@ struct ScanResultView: View {
     
     // Find the route for the bus
     private var busRoute: BusRoute? {
+        // Use the stored value if available
+        if let stored = matchedRoute {
+            return stored
+        }
+        
         guard let routeCode = matchingBusInfo?.routeCode else { return nil }
         let route = busRoutes.first { $0.routeCode == routeCode }
         
@@ -204,6 +217,20 @@ struct ScanResultView: View {
             await loadData()
         }
         .id(forceRefresh) // Use the state to force a refresh when needed
+        .onAppear {
+            // Add a backup loading mechanism
+            if isLoading && retryCount == 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if isLoading {
+                        print("Backup loading mechanism triggered")
+                        retryCount += 1
+                        Task {
+                            await loadData()
+                        }
+                    }
+                }
+            }
+        }
     }
     
     // Function to normalize plate number for comparison
@@ -438,8 +465,13 @@ struct ScanResultView: View {
         try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
         
         // Check for matching bus info
-        if matchingBusInfo != nil {
+        if let busInfo = matchingBusInfo {
             print("Found matching bus info")
+            matchedBusInfo = busInfo // Store the matched bus info
+            
+            // Find and store the matching route
+            matchedRoute = busRoutes.first { $0.routeCode == busInfo.routeCode }
+            
             updateLastSeen()
             isLoading = false
         } else {
@@ -450,14 +482,51 @@ struct ScanResultView: View {
                 
                 // Force a UI refresh after adding the bus info
                 try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
-                forceRefresh.toggle() // Toggle to force a refresh
                 
-                // This will trigger a UI refresh
-                if matchingBusInfo != nil {
+                // Try to find the newly added bus info
+                let newBusInfo = busInfos.first { busInfo in
+                    normalizePlateForComparison(busInfo.plateNumber) == normalizePlateForComparison(plateNumber)
+                }
+                
+                if let newBusInfo = newBusInfo {
                     print("Successfully added and matched bus info")
+                    matchedBusInfo = newBusInfo // Store the matched bus info
+                    
+                    // Find and store the matching route
+                    matchedRoute = busRoutes.first { $0.routeCode == newBusInfo.routeCode }
                 } else {
                     print("Failed to match bus info after adding")
+                    
+                    // Try one more time with a longer delay
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                    
+                    // Create the bus info manually if needed
+                    if let routeInfo = getRouteInfoForPlate(plateNumber) {
+                        let manualBusInfo = BusInfo(
+                            plateNumber: plateNumber,
+                            routeCode: routeInfo.code,
+                            routeName: routeInfo.name,
+                            startPoint: routeInfo.startPoint,
+                            endPoint: routeInfo.endPoint,
+                            estimatedTime: 30,
+                            distance: 0.5
+                        )
+                        matchedBusInfo = manualBusInfo
+                        
+                        // Create a matching route if needed
+                        let manualRoute = busRoutes.first { $0.routeCode == routeInfo.code }
+                        matchedRoute = manualRoute
+                    }
                 }
+                
+                forceRefresh.toggle() // Toggle to force a refresh
+            } else if retryCount < 3 {
+                // If we haven't found a match and haven't retried too many times, try again
+                retryCount += 1
+                print("Retry attempt \(retryCount) for plate: \(plateNumber)")
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                await loadData() // Recursive call with retry
+                return
             }
             
             // Ensure we're not stuck in loading state

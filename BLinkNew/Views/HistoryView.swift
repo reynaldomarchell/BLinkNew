@@ -15,6 +15,7 @@ struct HistoryView: View {
     
     @State private var searchText = ""
     @State private var sortOrder: SortOrder = .newest
+    @State private var isDataLoaded = false
     
     var onSelectBus: (String) -> Void
     
@@ -122,7 +123,16 @@ struct HistoryView: View {
                     List {
                         ForEach(filteredBuses) { busInfo in
                             Button(action: {
-                                onSelectBus(busInfo.plateNumber)
+                                // Ensure data is loaded before selecting a bus
+                                if isDataLoaded {
+                                    onSelectBus(busInfo.plateNumber)
+                                } else {
+                                    print("Data not fully loaded yet, delaying selection")
+                                    // Add a small delay to ensure data is ready
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                        onSelectBus(busInfo.plateNumber)
+                                    }
+                                }
                             }) {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 4) {
@@ -165,6 +175,13 @@ struct HistoryView: View {
                     dismiss()
                 }
             )
+            .onAppear {
+                // Mark data as loaded after a short delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    isDataLoaded = true
+                    print("History view data marked as loaded")
+                }
+            }
         }
     }
     
@@ -207,7 +224,7 @@ struct HistoryView: View {
         }
         
         // Otherwise, try to format it with spaces
-        let cleaned = plate.uppercased()
+        let cleaned = plate.uppercased().filter { !$0.isWhitespace }
         
         // Try to extract components
         var regionCode = ""
