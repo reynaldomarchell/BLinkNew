@@ -20,10 +20,20 @@ struct HomeView: View {
     @State private var showJourneyView = false
     @State private var selectedTab: Int = 0
     
+    // Add deep link handling
+    var deepLinkJourney: Bool
+    var deepLinkPlateNumber: String?
+    
     // Add SwiftData environment
     @Environment(\.modelContext) private var modelContext
     @Query private var busInfos: [BusInfo]
     @Query private var busRoutes: [BusRoute]
+    
+    init(deepLinkJourney: Bool = false, deepLinkPlateNumber: String? = nil) {
+        self.deepLinkJourney = deepLinkJourney
+        self.deepLinkPlateNumber = deepLinkPlateNumber
+        print("HomeView initialized with deepLinkJourney: \(deepLinkJourney), plateNumber: \(deepLinkPlateNumber ?? "none")")
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -40,42 +50,50 @@ struct HomeView: View {
                 
                 // Overlay UI
                 VStack(spacing: 0) {
-                    // Header - only tutorial button, no title or history button
-                    HStack {
+                    // Header area with fixed height
+                    VStack(spacing: 0) {
+                        // Tutorial button in top right
+                        HStack {
+                            Spacer()
+                            
+                            Button(action: {
+                                showTutorial = true
+                            }) {
+                                Image(systemName: "questionmark")
+                                    .font(.title2)
+                                    .foregroundColor(.white)
+                                    .padding(12)
+                                    .background(Circle().fill(Color(hex: "a068ff")))
+                            }
+                            .padding(.trailing)
+                            .padding(.top, geometry.safeAreaInsets.top > 0 ? 0 : 8)
+                        }
+                        .padding(.top, geometry.safeAreaInsets.top)
+                        
+                        // Active journey card (if there's an active journey)
+                        if let journey = activeJourney {
+                            ActiveJourneyCard(busInfo: journey) {
+                                showJourneyView = true
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 4)
+                            .padding(.bottom, 8)
+                            .transition(.move(edge: .top))
+                        }
+                    }
+                    .background(Color.black.opacity(0.3))
+                    
+                    // Flexible space that adapts based on screen size
+                    Spacer(minLength: 0)
+                    
+                    // Scanning frame area - centered in the remaining space
+                    VStack {
                         Spacer()
                         
-                        // Tutorial button - now purple
-                        Button(action: {
-                            showTutorial = true
-                        }) {
-                            Image(systemName: "questionmark")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .padding(12)
-                                .background(Circle().fill(Color(hex: "a068ff")))
-                        }
-                        .padding(.trailing)
-                    }
-                    .padding(.top)
-                    
-                    Spacer()
-
-                    // Active journey card (if there's an active journey)
-                    if let journey = activeJourney {
-                        ActiveJourneyCard(busInfo: journey) {
-                            showJourneyView = true
-                        }
-                        .padding(.horizontal)
-                        .padding(.bottom, 20)
-                        .transition(.move(edge: .bottom))
-                    }
-
-                    // Use ZStack to keep the frame in a fixed position
-                    ZStack(alignment: .center) {
                         // Scanning frame - solid rectangle that turns green when plate detected
                         Rectangle()
                             .stroke(style: StrokeStyle(lineWidth: 3))
-                            .frame(width: 300, height: 150)
+                            .frame(width: min(geometry.size.width - 40, 300), height: 150)
                             .foregroundColor(isPlateDetected ? .green : .white)
                             .overlay(
                                 GeometryReader { frameGeometry in
@@ -87,11 +105,12 @@ struct HomeView: View {
                                         }
                                 }
                             )
+                        
+                        Spacer()
                     }
-                    .frame(height: 300) // Fixed height
-                    .padding(.bottom, 0) // Fixed padding below frame
-
-                    // Fixed space for the plate detection card
+                    .frame(height: geometry.size.height * 0.4)
+                    
+                    // Plate detection card area with fixed height
                     ZStack {
                         // Plate detection overlay with purple gradient
                         if isPlateDetected {
@@ -121,33 +140,35 @@ struct HomeView: View {
                             .cornerRadius(16)
                         }
                     }
-                    .frame(height: 80) // Fixed height for card area
-                    .padding(.bottom, 60) // Fixed padding
-
-                    // Capture button
-                    Button(action: {
-                        captureAndAnalyze()
-                    }) {
-                        ZStack {
-                            Circle()
-                                .stroke(Color.white, lineWidth: 4)
-                                .frame(width: 80, height: 80)
-                            
-                            Circle()
-                                .fill(isProcessing ? Color.gray : Color.white)
-                                .frame(width: 70, height: 70)
-                            
-                            if isProcessing {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .scaleEffect(1.5)
+                    .frame(height: 80)
+                    
+                    // Capture button area with fixed height
+                    VStack {
+                        Button(action: {
+                            captureAndAnalyze()
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 4)
+                                    .frame(width: 80, height: 80)
+                                
+                                Circle()
+                                    .fill(isProcessing ? Color.gray : Color.white)
+                                    .frame(width: 70, height: 70)
+                                
+                                if isProcessing {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(1.5)
+                                }
                             }
                         }
+                        .disabled(isProcessing)
+                        .padding(.bottom, 20)
                     }
-                    .disabled(isProcessing)
-                    .padding(.bottom, 40)
+                    .frame(height: 100)
                     
-                    // Bottom tab bar
+                    // Bottom tab bar with fixed height
                     HStack {
                         Spacer()
                         
@@ -187,16 +208,50 @@ struct HomeView: View {
                     .background(Color.white)
                     .cornerRadius(20, corners: [.topLeft, .topRight])
                 }
-                .ignoresSafeArea(.all, edges: .bottom) // Ensure the bottom extends past safe area
+                .edgesIgnoringSafeArea(.bottom)
             }
-            .background(Color.black) // Add black background to fill any gaps
+            .background(Color.black)
         }
         .onAppear {
             checkCameraPermission()
             
+            // Check for active journey from LiveActivityManager
+            if LiveActivityManager.shared.hasActiveJourney() {
+                print("Found active journey from LiveActivityManager")
+                activeJourney = LiveActivityManager.shared.getCurrentJourneyInfo()
+                
+                // If we have an active journey and we're coming from a deep link, show the journey view
+                if deepLinkJourney && activeJourney != nil {
+                    print("Opening journey view from deep link")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        showJourneyView = true
+                    }
+                }
+            }
+            
+            // Handle deep link with plate number
+            if let plateNumber = deepLinkPlateNumber, deepLinkJourney {
+                print("Processing deep link with plate number: \(plateNumber)")
+                
+                // Find the bus info for this plate number
+                if let busInfo = findBusInfo(for: plateNumber) {
+                    print("Found matching bus info for plate: \(plateNumber)")
+                    activeJourney = busInfo
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        showJourneyView = true
+                    }
+                }
+            }
+            
             // Debug print
             print("Current bus infos: \(busInfos.count)")
             print("Available routes: \(busRoutes.count)")
+        }
+        .onChange(of: deepLinkJourney) { oldValue, newValue in
+            if newValue && activeJourney != nil {
+                print("Deep link journey flag changed, showing journey view")
+                showJourneyView = true
+            }
         }
         .sheet(isPresented: $showScanResult) {
             if let plate = recognizedPlate {
@@ -229,7 +284,16 @@ struct HomeView: View {
                     busInfo: journey,
                     initialState: .ongoing,
                     onJourneyComplete: {
+                        // Clear the active journey
                         activeJourney = nil
+                        
+                        // Double-check that LiveActivityManager has cleared everything
+                        if LiveActivityManager.shared.hasActiveJourney() {
+                            print("Warning: LiveActivityManager still has an active journey, forcing cleanup")
+                            Task {
+                                await LiveActivityManager.shared.forceEndAllActivities()
+                            }
+                        }
                     }
                 )
             }
@@ -400,23 +464,6 @@ struct HomeView: View {
         }
         
         return nil
-    }
-}
-
-// Extension to create rounded corners for specific corners
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-}
-
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
-        return Path(path.cgPath)
     }
 }
 
@@ -822,9 +869,10 @@ struct ActiveJourneyCard: View {
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.8))
                     
-                    Text(busInfo.routeName)
+                    Text(limitTextLength(busInfo.routeName, maxLength: 30))
                         .font(.headline)
                         .foregroundColor(.white)
+                        .lineLimit(1)
                     
                     HStack {
                         Image(systemName: "location.fill")
@@ -834,6 +882,7 @@ struct ActiveJourneyCard: View {
                         Text(busInfo.endPoint)
                             .font(.subheadline)
                             .foregroundColor(.white.opacity(0.8))
+                            .lineLimit(1)
                     }
                 }
                 
@@ -869,33 +918,14 @@ struct ActiveJourneyCard: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-}
-
-// Helper extension for hex colors
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
+    
+    // Helper function to limit text length for better display
+    private func limitTextLength(_ text: String, maxLength: Int) -> String {
+        if text.count <= maxLength {
+            return text
         }
-        
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
-        )
+        let index = text.index(text.startIndex, offsetBy: maxLength - 3)
+        return String(text[..<index]) + "..."
     }
 }
 

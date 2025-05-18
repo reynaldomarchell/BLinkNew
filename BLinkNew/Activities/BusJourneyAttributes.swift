@@ -13,4 +13,5 @@ struct BusJourneyAttributes: ActivityAttributes {
     var routeCode: String
     var routeName: String
     var startTime: Date
+    var totalDistance: Double // Added for progress calculation
 }

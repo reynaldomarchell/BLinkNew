@@ -20,6 +20,7 @@ struct JourneyView: View {
     @State private var timer: Timer?
     @State private var showCompletionAlert = false
     @State private var selectedStation: String?
+    @State private var isEndingJourney = false
     
     init(busInfo: BusInfo, initialState: JourneyState = .start, onJourneyComplete: @escaping () -> Void) {
         self.busInfo = busInfo
@@ -30,70 +31,104 @@ struct JourneyView: View {
     }
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                // Header text changes based on state
-                Text(headerText)
-                    .font(.headline)
-                    .padding(.top, 20)
-                
-                // Destination card
-                VStack(spacing: 16) {
-                    // Bus plate and destination card
-                    destinationCard
-                    
-                    // Journey details (only shown in start and ongoing states)
-                    if journeyState != .completed {
-                        journeyDetails
+        GeometryReader { geometry in
+            NavigationView {
+                VStack(spacing: 0) {
+                    // Header text changes based on state
+                    if journeyState == .start {
+                        Text("Are you ready to start journey to this destination?")
+                            .font(.headline)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 20)
+                            .padding(.horizontal)
+                            .padding(.bottom, 16)
                     }
+                    
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Destination card
+                            destinationCard
+                                .padding(.horizontal)
+                                .padding(.top, journeyState == .start ? 0 : 20)
+                            
+                            // Journey details (only shown in start and ongoing states)
+                            if journeyState != .completed {
+                                journeyDetails
+                                    .padding(.horizontal)
+                            }
+                            
+                            // Middle content changes based on state
+                            if journeyState == .completed {
+                                completionContent
+                                    .padding(.top, 40)
+                            }
+                            
+                            // Add spacer to push content to the top
+                            Spacer(minLength: geometry.size.height * 0.2)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Bottom button changes based on state
+                    actionButton
+                        .padding(.horizontal)
+                        .padding(.bottom, geometry.safeAreaInsets.bottom > 0 ? 0 : 20)
+                        .padding(.top, 16)
                 }
-                .padding(.horizontal)
-                
-                // Middle content changes based on state
-                if journeyState == .completed {
-                    completionContent
+                .navigationBarTitle(navigationTitle, displayMode: .inline)
+                .navigationBarItems(leading: Button("Back") {
+                    if journeyState == .completed {
+                        dismiss()
+                        onJourneyComplete()
+                    } else {
+                        dismiss()
+                    }
+                })
+                .onAppear {
+                    if journeyState == .ongoing {
+                        startJourneyTimer()
+                    }
+                    
+                    // Print debug info
+                    print("JourneyView appeared with state: \(journeyState)")
                 }
-                
-                Spacer()
-                
-                // Bottom button changes based on state
-                actionButton
-            }
-            .navigationBarTitle(navigationTitle, displayMode: .inline)
-            .navigationBarItems(leading: Button("Back") {
-                dismiss()
-            })
-            .onAppear {
-                if journeyState == .ongoing {
-                    startJourneyTimer()
+                .onDisappear {
+                    timer?.invalidate()
+                    timer = nil
                 }
-            }
-            .onDisappear {
-                timer?.invalidate()
-            }
-            .alert(isPresented: $showCompletionAlert) {
-                Alert(
-                    title: Text("End Journey"),
-                    message: Text("Are you sure you want to end your journey?"),
-                    primaryButton: .default(Text("Yes"), action: {
-                        endJourney()
-                    }),
-                    secondaryButton: .cancel()
+                .alert(isPresented: $showCompletionAlert) {
+                    Alert(
+                        title: Text("End Journey"),
+                        message: Text("Are you sure you want to end your journey?"),
+                        primaryButton: .default(Text("Yes"), action: {
+                            endJourney()
+                        }),
+                        secondaryButton: .cancel()
+                    )
+                }
+                .overlay(
+                    Group {
+                        if isEndingJourney {
+                            Color.black.opacity(0.5)
+                                .edgesIgnoringSafeArea(.all)
+                                .overlay(
+                                    VStack {
+                                        ProgressView()
+                                            .scaleEffect(1.5)
+                                            .padding()
+                                        Text("Ending journey...")
+                                            .foregroundColor(.white)
+                                    }
+                                )
+                        }
+                    }
                 )
             }
         }
     }
     
     // MARK: - View Components
-    
-    private var headerText: String {
-        switch journeyState {
-        case .start:
-            return "Are you want to start journey to this destination?"
-        case .ongoing, .completed:
-            return "Your current journey"
-        }
-    }
     
     private var navigationTitle: String {
         switch journeyState {
@@ -107,84 +142,79 @@ struct JourneyView: View {
     }
     
     private var destinationCard: some View {
-        Button(action: {}) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(formatPlateForDisplay(busInfo.plateNumber))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        
-                        Text(busInfo.endPoint)
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                    }
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(formatPlateForDisplay(busInfo.plateNumber))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                     
-                    Spacer()
+                    Text(busInfo.endPoint)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                }
+                
+                Spacer()
+                
+                ZStack {
+                    Circle()
+                        .fill(routeCodeColor)
+                        .frame(width: 60, height: 60)
                     
-                    ZStack {
-                        Circle()
-                            .fill(routeCodeColor)
-                            .frame(width: 40, height: 40)
-                        
-                        Text(busInfo.routeCode)
-                            .font(.headline)
-                            .foregroundColor(.white)
-                    }
+                    Text(busInfo.routeCode)
+                        .font(.headline)
+                        .foregroundColor(.white)
                 }
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                    .background(Color(.systemBackground).cornerRadius(12))
-            )
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                .background(Color(.systemBackground).cornerRadius(16))
+        )
     }
     
     private var journeyDetails: some View {
         HStack(spacing: 20) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(String(format: "%.1f км", remainingDistance))
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    .font(.system(size: 28, weight: .bold))
                 
-                if journeyState == .start {
-                    Spacer().frame(height: 20)
-                }
+                Text("Distance")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
             
             Spacer()
             
             Rectangle()
                 .fill(Color.gray.opacity(0.3))
-                .frame(width: 1, height: 40)
+                .frame(width: 1, height: 60)
             
             Spacer()
             
             VStack(alignment: .trailing, spacing: 4) {
                 Text("Est. \(formatTime(remainingTime))")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    .font(.system(size: 28, weight: .bold))
                 
-                if journeyState == .start {
-                    Spacer().frame(height: 20)
-                }
+                Text("Time")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
         }
-        .padding(.vertical, 20)
+        .padding(.vertical, 24)
+        .padding(.horizontal, 8)
     }
     
     private var completionContent: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 24) {
             Text("You have arrived at your destination 🎉")
                 .font(.headline)
                 .multilineTextAlignment(.center)
-                .padding(.top, 40)
             
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 60))
+                .font(.system(size: 80))
                 .foregroundColor(.green)
                 .padding(.top, 20)
         }
@@ -211,8 +241,8 @@ struct JourneyView: View {
                 .background(buttonColor)
                 .cornerRadius(12)
         }
-        .padding(.horizontal)
-        .padding(.bottom, 20)
+        .buttonStyle(PlainButtonStyle())
+        .disabled(isEndingJourney)
     }
     
     private var buttonText: String {
@@ -270,6 +300,7 @@ struct JourneyView: View {
         // If journey is complete, show completion view
         if remainingTime <= 0 || remainingDistance <= 0 {
             timer?.invalidate()
+            timer = nil
             
             // Show journey completion view
             withAnimation {
@@ -279,9 +310,9 @@ struct JourneyView: View {
             // End the live activity
             LiveActivityManager.shared.endBusJourney()
         } else {
-            // Update the live activity
+            // Update the live activity - use current location directly without prefix
             LiveActivityManager.shared.updateBusJourney(
-                currentLocation: "En route to \(busInfo.endPoint)",
+                currentLocation: busInfo.startPoint,
                 timeRemaining: TimeInterval(remainingTime * 60),
                 distanceRemaining: remainingDistance
             )
@@ -289,14 +320,26 @@ struct JourneyView: View {
     }
     
     private func endJourney() {
+        // Show loading overlay
+        isEndingJourney = true
+        
+        // Stop the timer first
         timer?.invalidate()
+        timer = nil
         
-        // End the live activity
-        LiveActivityManager.shared.endBusJourney()
-        
-        // Show completion state
-        withAnimation {
-            journeyState = .completed
+        // End the live activity and wait for completion
+        Task {
+            // End the live activity and wait for it to complete
+            await LiveActivityManager.shared.endBusJourneyAsync()
+            
+            // Update UI on main thread
+            DispatchQueue.main.async {
+                // Show completion state
+                withAnimation {
+                    journeyState = .completed
+                    isEndingJourney = false
+                }
+            }
         }
     }
     

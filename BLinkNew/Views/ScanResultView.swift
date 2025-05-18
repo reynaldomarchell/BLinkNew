@@ -67,7 +67,7 @@ struct ScanResultView: View {
         if let route = busRoute {
             // Use actual stations from the route
             return route.stations.enumerated().map { index, station in
-                // Add simulated arrival times for display purposes
+                // Add simulated arrival times and varying distances for display purposes
                 var stationWithTime = station
                 stationWithTime.arrivalTime = createTime(hour: 9, minute: 26 + (index * 5))
                 return stationWithTime
@@ -169,6 +169,7 @@ struct ScanResultView: View {
                                             station: station,
                                             isLast: index == stations.count - 1,
                                             routeColor: colorFromString(routeInfo.color),
+                                            index: index,
                                             onTap: {
                                                 selectedStation = station.name
                                                 showJourneyView = true
@@ -466,6 +467,7 @@ struct StationRowButton: View {
     let station: Station
     let isLast: Bool
     let routeColor: Color
+    let index: Int
     let onTap: () -> Void
     
     var body: some View {
@@ -511,7 +513,7 @@ struct StationRowButton: View {
                 
                 // Distance and arrival time
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text("0.1km")
+                    Text("\(calculateStationDistance(index: index))km")
                         .font(.subheadline)
                         .foregroundColor(.primary)
                     
@@ -526,6 +528,13 @@ struct StationRowButton: View {
             .padding(.horizontal, 16)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    // Calculate a varying distance for each station
+    private func calculateStationDistance(index: Int) -> String {
+        // Generate distances that increase with each station (0.1, 0.3, 0.6, etc.)
+        let distance = 0.1 + (Double(index) * 0.2)
+        return String(format: "%.1f", distance)
     }
     
     private var stationColor: Color {

@@ -6,11 +6,59 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D20CC6882DD99E9A00F3709C /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D20CC6872DD99E9A00F3709C /* WidgetKit.framework */; };
+		D20CC68A2DD99E9A00F3709C /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D20CC6892DD99E9A00F3709C /* SwiftUI.framework */; };
+		D20CC69B2DD99E9B00F3709C /* BLinkWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D20CC6852DD99E9A00F3709C /* BLinkWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D20CC6992DD99E9B00F3709C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D258A7912DC9C04C00B8BEB7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D20CC6842DD99E9A00F3709C;
+			remoteInfo = BLinkWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D20CC6A02DD99E9B00F3709C /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				D20CC69B2DD99E9B00F3709C /* BLinkWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		D20CC6852DD99E9A00F3709C /* BLinkWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BLinkWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		D20CC6872DD99E9A00F3709C /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		D20CC6892DD99E9A00F3709C /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		D20CC6A12DD99ED700F3709C /* BLinkWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BLinkWidgetExtension.entitlements; sourceTree = "<group>"; };
 		D258A7992DC9C04C00B8BEB7 /* BLinkNew.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BLinkNew.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D20CC69F2DD99E9B00F3709C /* Exceptions for "BLinkWidget" folder in "BLinkWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = D20CC6842DD99E9A00F3709C /* BLinkWidgetExtension */;
+		};
+		D20CC6AA2DD9A82100F3709C /* Exceptions for "Shared" folder in "BLinkWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				SharedExtensions.swift,
+			);
+			target = D20CC6842DD99E9A00F3709C /* BLinkWidgetExtension */;
+		};
 		D2E4CA062DD350CC00A9F523 /* Exceptions for "BLinkNew" folder in "BLinkNew" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -21,6 +69,22 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		D20CC68B2DD99E9A00F3709C /* BLinkWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D20CC69F2DD99E9B00F3709C /* Exceptions for "BLinkWidget" folder in "BLinkWidgetExtension" target */,
+			);
+			path = BLinkWidget;
+			sourceTree = "<group>";
+		};
+		D20CC6A62DD9A80400F3709C /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D20CC6AA2DD9A82100F3709C /* Exceptions for "Shared" folder in "BLinkWidgetExtension" target */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		D258A79B2DC9C04C00B8BEB7 /* BLinkNew */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -32,6 +96,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		D20CC6822DD99E9A00F3709C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D20CC68A2DD99E9A00F3709C /* SwiftUI.framework in Frameworks */,
+				D20CC6882DD99E9A00F3709C /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D258A7962DC9C04C00B8BEB7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -42,10 +115,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		D20CC6862DD99E9A00F3709C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D20CC6872DD99E9A00F3709C /* WidgetKit.framework */,
+				D20CC6892DD99E9A00F3709C /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		D258A7902DC9C04C00B8BEB7 = {
 			isa = PBXGroup;
 			children = (
+				D20CC6A62DD9A80400F3709C /* Shared */,
+				D20CC6A12DD99ED700F3709C /* BLinkWidgetExtension.entitlements */,
 				D258A79B2DC9C04C00B8BEB7 /* BLinkNew */,
+				D20CC68B2DD99E9A00F3709C /* BLinkWidget */,
+				D20CC6862DD99E9A00F3709C /* Frameworks */,
 				D258A79A2DC9C04C00B8BEB7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,6 +140,7 @@
 			isa = PBXGroup;
 			children = (
 				D258A7992DC9C04C00B8BEB7 /* BLinkNew.app */,
+				D20CC6852DD99E9A00F3709C /* BLinkWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -61,6 +148,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		D20CC6842DD99E9A00F3709C /* BLinkWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D20CC69C2DD99E9B00F3709C /* Build configuration list for PBXNativeTarget "BLinkWidgetExtension" */;
+			buildPhases = (
+				D20CC6812DD99E9A00F3709C /* Sources */,
+				D20CC6822DD99E9A00F3709C /* Frameworks */,
+				D20CC6832DD99E9A00F3709C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				D20CC68B2DD99E9A00F3709C /* BLinkWidget */,
+			);
+			name = BLinkWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = BLinkWidgetExtension;
+			productReference = D20CC6852DD99E9A00F3709C /* BLinkWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		D258A7982DC9C04C00B8BEB7 /* BLinkNew */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = D258A7A42DC9C04D00B8BEB7 /* Build configuration list for PBXNativeTarget "BLinkNew" */;
@@ -68,12 +177,15 @@
 				D258A7952DC9C04C00B8BEB7 /* Sources */,
 				D258A7962DC9C04C00B8BEB7 /* Frameworks */,
 				D258A7972DC9C04C00B8BEB7 /* Resources */,
+				D20CC6A02DD99E9B00F3709C /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				D20CC69A2DD99E9B00F3709C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				D20CC6A62DD9A80400F3709C /* Shared */,
 				D258A79B2DC9C04C00B8BEB7 /* BLinkNew */,
 			);
 			name = BLinkNew;
@@ -93,6 +205,9 @@
 				LastSwiftUpdateCheck = 1630;
 				LastUpgradeCheck = 1630;
 				TargetAttributes = {
+					D20CC6842DD99E9A00F3709C = {
+						CreatedOnToolsVersion = 16.3;
+					};
 					D258A7982DC9C04C00B8BEB7 = {
 						CreatedOnToolsVersion = 16.3;
 					};
@@ -113,11 +228,19 @@
 			projectRoot = "";
 			targets = (
 				D258A7982DC9C04C00B8BEB7 /* BLinkNew */,
+				D20CC6842DD99E9A00F3709C /* BLinkWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		D20CC6832DD99E9A00F3709C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D258A7972DC9C04C00B8BEB7 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -128,6 +251,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		D20CC6812DD99E9A00F3709C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D258A7952DC9C04C00B8BEB7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -137,7 +267,73 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		D20CC69A2DD99E9B00F3709C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D20CC6842DD99E9A00F3709C /* BLinkWidgetExtension */;
+			targetProxy = D20CC6992DD99E9B00F3709C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		D20CC69D2DD99E9B00F3709C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = BLinkWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 74859D4FR4;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BLinkWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BLinkWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.developer.BLinkNew.BLinkWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D20CC69E2DD99E9B00F3709C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = BLinkWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 74859D4FR4;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BLinkWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BLinkWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.developer.BLinkNew.BLinkWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		D258A7A22DC9C04D00B8BEB7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -264,6 +460,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BLinkNew/BLinkNew.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 74859D4FR4;
@@ -296,6 +493,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = BLinkNew/BLinkNew.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 74859D4FR4;
@@ -326,6 +524,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		D20CC69C2DD99E9B00F3709C /* Build configuration list for PBXNativeTarget "BLinkWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D20CC69D2DD99E9B00F3709C /* Debug */,
+				D20CC69E2DD99E9B00F3709C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		D258A7942DC9C04C00B8BEB7 /* Build configuration list for PBXProject "BLinkNew" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
