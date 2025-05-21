@@ -55,16 +55,16 @@ BLinkNew is an enhanced mobile application designed to help users scan bus plate
 
 1. **Clone Repository:**
 
-\`\`\`bash
+```bash
 git clone https://github.com/reynaldomarchell/BLinkNew.git
-\`\`\`
+```
 
 2. **Open Project in Xcode:**
 
-\`\`\`bash
+```bash
 cd BLinkNew
 open BLinkNew.xcodeproj
-\`\`\`
+```
 
 3. **Install Dependencies:**
 
@@ -170,6 +170,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 > Special thanks to all the mentors and mentees that helped us achieve this, especially to Kak Luqman.
 
-```
-
-```
